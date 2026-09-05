@@ -1,0 +1,405 @@
+// NestWise data model — see NestWise_PRD.md §49 (Suggested Data Model) and §52 (Privacy & Child
+// Safety). Health/child data is minimised; cascade deletes support full account + child-profile
+// deletion.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  MOTHER
+  PARTNER
+  PARENT_CAREGIVER
+}
+
+enum Stage {
+  PREGNANCY
+  BIRTH
+  POSTPARTUM
+  CHILD
+  GENERAL
+}
+
+enum ContentType {
+  WEEK_PREGNANCY
+  LESSON
+  FACT
+  SYMPTOM
+  FOOD
+  EXERCISE
+  RESOURCE
+  DEVELOPMENT
+  BIRTH_TOPIC
+  POSTPARTUM_TOPIC
+  FIRST_DAYS
+  PARENT_LEARNING
+  DISCIPLINE
+}
+
+enum GameFormat {
+  CHOOSE
+  MATCH
+  MEMORY
+  COUNT
+  ODD_ONE_OUT
+  PATTERN
+  MCQ
+}
+
+enum ChecklistKind {
+  MOTHER_BAG
+  BABY_BAG
+  BABY_PREP
+  APPT_QUESTIONS
+  BIRTH_PREFERENCES
+}
+
+enum ContactKind {
+  PROVIDER
+  HOSPITAL
+  PEDIATRICIAN
+  EMERGENCY
+}
+
+enum SafetyLevel {
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+}
+
+enum AskCategory {
+  PREGNANCY
+  BIRTH
+  POSTPARTUM
+  BABY
+  PARENTING
+  GENERAL
+}
+
+// ---------------------------------------------------------------------------
+// Accounts, families, profiles
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  role         Role
+  timezone     String   @default("UTC")
+  country      String   @default("US")
+  // Free-form personalization: dietaryPreference, allergies[], learningFormat, interests[],
+  // notification toggles, journeyIntent. Kept as JSON so preferences evolve without migrations.
+  preferences  Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships      FamilyMembership[]
+  bookmarks        Bookmark[]
+  quizAttempts     QuizAttempt[]
+  lessonCompletion LessonCompletion[]
+  askLogs          AskLog[]
+}
+
+model Family {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  members           FamilyMembership[]
+  pregnancyProfile  PregnancyProfile?
+  children          Child[]
+  checklists        Checklist[]
+  contacts          Contact[]
+}
+
+model FamilyMembership {
+  id       String @id @default(cuid())
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  family   Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId String
+  role     Role
+
+  @@unique([userId, familyId])
+  @@index([familyId])
+}
+
+model PregnancyProfile {
+  id                 String    @id @default(cuid())
+  family             Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId           String    @unique
+  estimatedDueDate   DateTime
+  lmpDate            DateTime?
+  dietaryPreferences String[]  @default([])
+  allergies          String[]  @default([])
+  contentPreferences String[]  @default([])
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model Child {
+  id             String   @id @default(cuid())
+  family         Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId       String
+  nameOrNickname String
+  dateOfBirth    DateTime
+  avatar         String?
+  createdAt      DateTime @default(now())
+
+  quizAttempts     QuizAttempt[]
+  gameProgress     GameProgress[]
+  lessonCompletion LessonCompletion[]
+  journalEntries   JournalEntry[]
+  routines         Routine[]
+
+  @@index([familyId])
+}
+
+// ---------------------------------------------------------------------------
+// Curated content (PRD §49 Content). One table, many content types. Body is a
+// structured block array so the UI stays stable while wording is revised.
+// ---------------------------------------------------------------------------
+
+model Content {
+  id             String      @id @default(cuid())
+  slug           String      @unique
+  title          String
+  contentType    ContentType
+  stage          Stage
+  category       String
+  role           Role?
+  pregnancyWeek  Int?
+  ageMinMonths   Int?
+  ageMaxMonths   Int?
+  summary        String
+  blocks         Json        @default("[]")
+  keyTakeaways   String[]    @default([])
+  source         String      @default("Placeholder — pending expert review")
+  referenceUrls  String[]    @default([])
+  reviewedAt     DateTime?
+  published      Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([contentType])
+  @@index([stage])
+  @@index([pregnancyWeek])
+  @@index([ageMinMonths, ageMaxMonths])
+}
+
+model Quiz {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  category  String
+  stage     Stage
+  ageRange  String?
+  // [{ prompt, choices: string[], answerIndex, explanation }]
+  questions Json     @default("[]")
+  createdAt DateTime @default(now())
+
+  attempts QuizAttempt[]
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  quiz        Quiz     @relation(fields: [quizSlug], references: [slug], onDelete: Cascade)
+  quizSlug    String
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?
+  child       Child?   @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId     String?
+  score       Int
+  total       Int
+  completedAt DateTime @default(now())
+
+  @@index([quizSlug])
+  @@index([userId])
+  @@index([childId])
+}
+
+model Activity {
+  id                  String   @id @default(cuid())
+  slug                String   @unique
+  title               String
+  category            String
+  ageMinMonths        Int
+  ageMaxMonths        Int
+  materials           String[] @default([])
+  instructions        String[] @default([])
+  skillsSupported     String[] @default([])
+  safetyNotes         String[] @default([])
+  parentParticipation String
+  supervisionLevel    String   @default("Active supervision")
+  timeMin             Int      @default(15)
+  weekend             Boolean  @default(false)
+  createdAt           DateTime @default(now())
+
+  @@index([weekend])
+  @@index([ageMinMonths, ageMaxMonths])
+}
+
+model FamilyGame {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  title          String
+  description    String
+  minPlayers     Int      @default(2)
+  maxPlayers     Int      @default(6)
+  indoor         Boolean  @default(true)
+  outdoor        Boolean  @default(false)
+  timeMin        Int      @default(20)
+  needsMaterials Boolean  @default(false)
+  ageMinMonths   Int      @default(24)
+  ageMaxMonths   Int      @default(144)
+  instructions   String[] @default([])
+  skillsPracticed String[] @default([])
+  createdAt      DateTime @default(now())
+}
+
+model Game {
+  id              String     @id @default(cuid())
+  slug            String     @unique
+  title           String
+  category        String
+  format          GameFormat
+  minAgeMonths    Int        @default(24)
+  skillsSupported String[]   @default([])
+  // Format-specific rounds/options. See src/lib/games/engine.ts.
+  config          Json       @default("{}")
+  createdAt       DateTime   @default(now())
+
+  progress GameProgress[]
+
+  @@index([category])
+}
+
+model GameProgress {
+  id              String   @id @default(cuid())
+  child           Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId         String
+  game            Game     @relation(fields: [gameSlug], references: [slug], onDelete: Cascade)
+  gameSlug        String
+  level           Int      @default(1)
+  score           Int      @default(0)
+  skillsPracticed String[] @default([])
+  completedAt     DateTime @default(now())
+
+  @@index([childId])
+  @@index([gameSlug])
+}
+
+model LessonCompletion {
+  id          String   @id @default(cuid())
+  contentSlug String
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?
+  child       Child?   @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId     String?
+  completedAt DateTime @default(now())
+
+  @@unique([contentSlug, userId])
+  @@unique([contentSlug, childId])
+  @@index([userId])
+  @@index([childId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  refType   String
+  refSlug   String
+  title     String
+  href      String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, refType, refSlug])
+  @@index([userId])
+}
+
+model JournalEntry {
+  id          String   @id @default(cuid())
+  child       Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId     String
+  title       String
+  description String?
+  date        DateTime
+  mediaKey    String?
+  createdAt   DateTime @default(now())
+
+  @@index([childId])
+}
+
+model Routine {
+  id      String   @id @default(cuid())
+  child   Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId String
+  title   String
+  // [{ label, time, days: number[] }]
+  items   Json     @default("[]")
+  enabled Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([childId])
+}
+
+model Checklist {
+  id       String        @id @default(cuid())
+  family   Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId String
+  kind     ChecklistKind
+  items    ChecklistItem[]
+
+  @@unique([familyId, kind])
+}
+
+model ChecklistItem {
+  id          String    @id @default(cuid())
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  checklistId String
+  label       String
+  category    String    @default("General")
+  checked     Boolean   @default(false)
+  custom      Boolean   @default(false)
+  sortOrder   Int       @default(0)
+
+  @@index([checklistId])
+}
+
+model Contact {
+  id       String      @id @default(cuid())
+  family   Family      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId String
+  kind     ContactKind
+  name     String
+  phone    String?
+  notes    String?
+
+  @@index([familyId])
+}
+
+// Audit log for AI Q&A (PRD §58 "audit sensitive operations").
+model AskLog {
+  id          String      @id @default(cuid())
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  question    String
+  category    AskCategory
+  safetyLevel SafetyLevel
+  answer      String
+  citations   Json        @default("[]")
+  createdAt   DateTime    @default(now())
+
+  @@index([userId])
+}
