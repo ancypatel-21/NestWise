@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nestwise-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nestwise
+      POSTGRES_PASSWORD: nestwise
+      POSTGRES_DB: nestwise
+    ports:
+      - "5432:5432"
+    volumes:
+      - nestwise-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nestwise"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  nestwise-db-data:
