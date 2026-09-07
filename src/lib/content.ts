@@ -6,6 +6,19 @@ export function blocksOf(c: Content): ContentBlock[] {
   return (c.blocks as unknown as ContentBlock[]) ?? [];
 }
 
+/** Flatten a content entry to plain, speakable text (for the "Listen" audio mode). */
+export function plainText(c: Content): string {
+  const parts: string[] = [c.title, c.summary];
+  for (const b of blocksOf(c)) {
+    if (b.type === "paragraph" || b.type === "heading") parts.push(b.text);
+    else if (b.type === "list" || b.type === "steps") parts.push(...b.items);
+    else if (b.type === "callout") parts.push(`${b.title ?? ""}. ${b.text}`);
+    else if (b.type === "keyvalue") parts.push(...b.pairs.map((p) => `${p.label}: ${p.value}`));
+  }
+  if (c.keyTakeaways.length) parts.push("Key takeaways.", ...c.keyTakeaways);
+  return parts.filter(Boolean).join(". ").replace(/\.\.+/g, ".");
+}
+
 export function listContent(where: Prisma.ContentWhereInput) {
   return db.content.findMany({ where: { published: true, ...where }, orderBy: { title: "asc" } });
 }

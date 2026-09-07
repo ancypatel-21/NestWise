@@ -3,8 +3,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { ContentBlocks } from "@/components/ui/ContentBlocks";
 import { BookmarkButton } from "@/components/ui/BookmarkButton";
 import { CompletionToggle } from "@/components/ui/CompletionToggle";
+import { ListenButton } from "@/components/ui/ListenButton";
 import { Card, CardTitle } from "@/components/ui/Card";
-import { blocksOf } from "@/lib/content";
+import { blocksOf, plainText } from "@/lib/content";
 
 /**
  * Shared renderer for a single Content entry (lesson, symptom, exercise, food, birth/postpartum
@@ -43,7 +44,8 @@ export function ContentDetail({
         backHref={backHref}
         backLabel={backLabel}
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <ListenButton text={plainText(content)} />
             <BookmarkButton
               refType={refType}
               refSlug={content.slug}
