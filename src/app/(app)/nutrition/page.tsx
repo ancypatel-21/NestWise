@@ -25,10 +25,18 @@ export default async function NutritionPage() {
   });
   const hiddenCount = foods.length - visible.length;
 
-  const byMeal = new Map<string, typeof visible>();
+  const MEAL_ORDER = ["Breakfast", "Lunch", "Snack", "Dinner", "Hydration"];
+  const grouped = new Map<string, typeof visible>();
   for (const f of visible) {
     const meal = f.category.split(" · ")[0];
-    byMeal.set(meal, [...(byMeal.get(meal) ?? []), f]);
+    grouped.set(meal, [...(grouped.get(meal) ?? []), f]);
+  }
+  const byMeal = new Map<string, typeof visible>();
+  for (const meal of MEAL_ORDER) {
+    if (grouped.has(meal)) byMeal.set(meal, grouped.get(meal)!);
+  }
+  for (const [meal, items] of grouped) {
+    if (!byMeal.has(meal)) byMeal.set(meal, items);
   }
 
   return (

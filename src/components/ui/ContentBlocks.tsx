@@ -62,7 +62,7 @@ function BlockView({ block }: { block: ContentBlock }) {
       );
     case "callout":
       return (
-        <Callout tone={block.tone} title={block.title}>
+        <Callout tone={block.tone} title={block.title} compact={block.tone !== "emergency"}>
           {block.text}
         </Callout>
       );

@@ -1,7 +1,6 @@
 import type { Content } from "@prisma/client";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ContentBlocks } from "@/components/ui/ContentBlocks";
-import { SourceBadge } from "@/components/ui/SourceBadge";
 import { BookmarkButton } from "@/components/ui/BookmarkButton";
 import { CompletionToggle } from "@/components/ui/CompletionToggle";
 import { Card, CardTitle } from "@/components/ui/Card";
@@ -9,7 +8,7 @@ import { blocksOf } from "@/lib/content";
 
 /**
  * Shared renderer for a single Content entry (lesson, symptom, exercise, food, birth/postpartum
- * topic, development page…). Bookmark + completion are opt-in per call site.
+ * topic, development page…). Key takeaways sit at the bottom so the explanation leads the page.
  */
 export function ContentDetail({
   content,
@@ -20,6 +19,7 @@ export function ContentDetail({
   saved = false,
   completed = false,
   showCompletion = false,
+  hero,
   children,
 }: {
   content: Content;
@@ -30,8 +30,11 @@ export function ContentDetail({
   saved?: boolean;
   completed?: boolean;
   showCompletion?: boolean;
+  hero?: React.ReactNode;
   children?: React.ReactNode;
 }) {
+  const refs = content.referenceUrls ?? [];
+
   return (
     <article>
       <PageHeader
@@ -55,8 +58,16 @@ export function ContentDetail({
         }
       />
 
+      {hero && <div className="mb-6">{hero}</div>}
+
+      <div className="nw-paper p-5">
+        <ContentBlocks blocks={blocksOf(content)} />
+      </div>
+
+      {children}
+
       {content.keyTakeaways.length > 0 && (
-        <Card className="mb-6 bg-[var(--color-accent-surface)]">
+        <Card className="mt-6 nw-paper--alt bg-[var(--color-accent-surface)]">
           <CardTitle>Key takeaways</CardTitle>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-ink)]">
             {content.keyTakeaways.map((k, i) => (
@@ -66,19 +77,19 @@ export function ContentDetail({
         </Card>
       )}
 
-      <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]">
-        <ContentBlocks blocks={blocksOf(content)} />
-      </div>
-
-      {children}
-
-      <div className="mt-6">
-        <SourceBadge
-          source={content.source}
-          reviewedAt={content.reviewedAt}
-          references={content.referenceUrls}
-        />
-      </div>
+      {refs.length > 0 && (
+        <p className="mt-4 text-xs text-[var(--color-ink-faint)]">
+          Further reading:{" "}
+          {refs.map((r, i) => (
+            <span key={r}>
+              {i > 0 && " · "}
+              <a href={r} target="_blank" rel="noreferrer" className="nw-underline">
+                {r.replace(/^https?:\/\//, "").split("/")[0]}
+              </a>
+            </span>
+          ))}
+        </p>
+      )}
     </article>
   );
 }

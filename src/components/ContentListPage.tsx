@@ -12,6 +12,7 @@ export function ContentListPage({
   hrefFor,
   groupBy = (c) => c.category,
   footerNote,
+  leading,
 }: {
   title: string;
   intro?: string;
@@ -20,6 +21,8 @@ export function ContentListPage({
   hrefFor: (c: Content) => string;
   groupBy?: (c: Content) => string;
   footerNote?: string;
+  /** Optional visual rendered at the top of each card (e.g. an exercise figure). */
+  leading?: (c: Content) => React.ReactNode;
 }) {
   const groups = new Map<string, Content[]>();
   for (const c of items) {
@@ -39,9 +42,12 @@ export function ContentListPage({
                 <Link
                   key={c.id}
                   href={hrefFor(c)}
-                  className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-soft)] transition-transform hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
+                  className="nw-paper nw-paper--alt flex flex-col p-4 transition-transform hover:-translate-y-0.5"
                 >
-                  <span className="block font-bold">{c.title}</span>
+                  {leading?.(c)}
+                  <span className="block font-display text-base font-bold text-[var(--color-ink)]">
+                    {c.title}
+                  </span>
                   <span className="mt-1 block text-sm text-[var(--color-ink-soft)]">
                     {c.summary}
                   </span>

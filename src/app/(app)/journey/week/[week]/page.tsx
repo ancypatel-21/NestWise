@@ -10,7 +10,6 @@ import { Tabs } from "@/components/ui/Tabs";
 import { ContentBlocks } from "@/components/ui/ContentBlocks";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Callout } from "@/components/ui/Callout";
-import { SourceBadge } from "@/components/ui/SourceBadge";
 import { BookmarkButton } from "@/components/ui/BookmarkButton";
 import { HeartHandshake } from "lucide-react";
 
@@ -139,16 +138,8 @@ export default async function WeekDetailPage({
         must match.
       </Callout>
 
-      <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]">
+      <div className="nw-paper p-5">
         <Tabs items={tabs} />
-      </div>
-
-      <div className="mt-6">
-        <SourceBadge
-          source={content.source}
-          reviewedAt={content.reviewedAt}
-          references={content.referenceUrls}
-        />
       </div>
     </div>
   );
