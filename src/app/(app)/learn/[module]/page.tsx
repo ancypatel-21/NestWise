@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { Check } from "lucide-react";
+import { Check, Clock, PlayCircle } from "lucide-react";
 import { getSessionUser, requireFamilyContext } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { completedSlugs } from "@/lib/content";
 import { LEARN_MODULES } from "@/content/learn-modules";
+import { slugify } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ButtonLink } from "@/components/ui/Button";
 
 export async function generateMetadata({
   params,
@@ -29,10 +31,8 @@ export default async function ModulePage({
   if (!meta) notFound();
 
   const user = await getSessionUser();
-  const lessons = await db.content.findMany({
-    where: { contentType: "LESSON", category: meta.title, published: true },
-  });
   const done = user ? await completedSlugs(user.id) : new Set<string>();
+  const quiz = await db.quiz.findUnique({ where: { slug: `learn-${meta.slug}` } });
 
   return (
     <div>
@@ -44,13 +44,14 @@ export default async function ModulePage({
       />
 
       <ol className="space-y-3">
-        {lessons.map((lesson, i) => {
-          const complete = done.has(lesson.slug);
+        {meta.lessons.map((lesson, i) => {
+          const slug = `${meta.slug}--${slugify(lesson.title)}`;
+          const complete = done.has(slug);
           return (
-            <li key={lesson.id}>
+            <li key={slug}>
               <Link
-                href={`/learn/${meta.slug}/${lesson.slug}`}
-                className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-soft)]"
+                href={`/learn/${meta.slug}/${slug}`}
+                className="nw-paper nw-paper--alt flex items-center gap-3 p-4"
               >
                 <span
                   className={
@@ -62,12 +63,34 @@ export default async function ModulePage({
                 >
                   {complete ? <Check size={16} aria-hidden /> : i + 1}
                 </span>
-                <span className="font-semibold">{lesson.title}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold text-[var(--color-ink)]">{lesson.title}</span>
+                  <span className="mt-0.5 flex items-center gap-3 text-xs text-[var(--color-ink-faint)]">
+                    <span className="inline-flex items-center gap-1">
+                      <Clock size={12} aria-hidden /> {lesson.minutes} min read
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <PlayCircle size={12} aria-hidden /> video
+                    </span>
+                  </span>
+                </span>
               </Link>
             </li>
           );
         })}
       </ol>
+
+      {quiz && (
+        <div className="mt-6 nw-paper nw-paper--alt bg-[var(--color-accent-surface)] p-5">
+          <p className="font-display text-lg font-bold">Module quiz</p>
+          <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+            {(quiz.questions as unknown[]).length} questions covering this whole module.
+          </p>
+          <ButtonLink href={`/quiz/${quiz.slug}`} size="sm" className="mt-3">
+            Take the quiz
+          </ButtonLink>
+        </div>
+      )}
     </div>
   );
 }

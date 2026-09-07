@@ -221,6 +221,8 @@ model QuizAttempt {
   childId     String?
   score       Int
   total       Int
+  // Prompts the learner got wrong — powers the "review what you missed" quiz.
+  missed      String[] @default([])
   completedAt DateTime @default(now())
 
   @@index([quizSlug])

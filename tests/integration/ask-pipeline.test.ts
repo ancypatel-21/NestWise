@@ -52,20 +52,29 @@ describe.skipIf(!hasDb)("seeded content coverage (PRD §54)", () => {
     for (let w = 4; w <= 40; w++) expect(nums.has(w)).toBe(true);
   });
 
-  it("has a development, parent-learning and discipline page for every child stage", async () => {
+  it("has a development, parent-learning and discipline page for every child stage (to age 3)", async () => {
     const dev = await db.content.count({ where: { contentType: "DEVELOPMENT" } });
     const parent = await db.content.count({ where: { contentType: "PARENT_LEARNING" } });
     const disc = await db.content.count({ where: { contentType: "DISCIPLINE" } });
-    expect(dev).toBe(23); // 12 months + 11 yearly bands
-    expect(parent).toBe(23);
-    expect(disc).toBe(23);
+    expect(dev).toBe(14); // 12 months + Age 1–2 + Age 2–3
+    expect(parent).toBe(14);
+    expect(disc).toBe(14);
   });
 
-  it("covers the PRD §31 learning-game categories", async () => {
+  it("covers the core early-years learning-game categories", async () => {
     const games = await db.game.findMany({ select: { category: true } });
     const cats = new Set(games.map((g) => g.category));
-    for (const c of ["Colors", "Numbers", "ABC / letters", "Emotions", "Science", "Geography"]) {
+    for (const c of ["Colours", "Numbers", "Letters", "Emotions", "Animals", "Counting"]) {
       expect(cats.has(c)).toBe(true);
+    }
+  });
+
+  it("has a 6–7 question quiz for every Learn module", async () => {
+    const learnQuizzes = await db.quiz.findMany({ where: { slug: { startsWith: "learn-" } } });
+    expect(learnQuizzes.length).toBe(16);
+    for (const q of learnQuizzes) {
+      const n = Array.isArray(q.questions) ? (q.questions as unknown[]).length : 0;
+      expect(n).toBeGreaterThanOrEqual(6);
     }
   });
 });

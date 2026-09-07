@@ -38,6 +38,7 @@ const quizSchema = z.object({
   quizSlug: z.string().min(1),
   score: z.number().int().min(0),
   total: z.number().int().min(1),
+  missed: z.array(z.string().max(400)).max(40).default([]),
   childId: z.string().optional(),
 });
 
@@ -49,6 +50,7 @@ export async function recordQuizAttempt(input: z.infer<typeof quizSchema>): Prom
       quizSlug: data.quizSlug,
       score: data.score,
       total: data.total,
+      missed: data.missed,
       userId: data.childId ? null : user.id,
       childId: data.childId ?? null,
     },

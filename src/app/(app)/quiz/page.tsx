@@ -1,10 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { RefreshCw } from "lucide-react";
 import { getSessionUser, requireFamilyContext } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Callout } from "@/components/ui/Callout";
+import { ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = { title: "Quizzes" };
 
@@ -13,7 +15,11 @@ export default async function QuizListPage() {
   const user = await getSessionUser();
 
   const stageFilter =
-    ctx.stage.part === 3 ? ["CHILD", "GENERAL"] : ctx.stage.part === 2 ? ["BIRTH", "POSTPARTUM", "PREGNANCY"] : ["PREGNANCY", "GENERAL"];
+    ctx.stage.part === 3
+      ? ["CHILD", "GENERAL"]
+      : ctx.stage.part === 2
+        ? ["BIRTH", "POSTPARTUM", "PREGNANCY"]
+        : ["PREGNANCY", "GENERAL"];
 
   const [quizzes, attempts] = await Promise.all([
     db.quiz.findMany({ orderBy: { title: "asc" } }),
@@ -26,6 +32,7 @@ export default async function QuizListPage() {
     if (!prev || a.score / a.total > prev.score / prev.total)
       bestBySlug.set(a.quizSlug, { score: a.score, total: a.total });
   }
+  const missedCount = new Set(attempts.flatMap((a) => a.missed)).size;
 
   const relevant = quizzes.filter((q) => stageFilter.includes(q.stage));
   const others = quizzes.filter((q) => !stageFilter.includes(q.stage));
@@ -34,21 +41,42 @@ export default async function QuizListPage() {
     <div>
       <PageHeader
         title="Quizzes"
-        intro="Short multiple-choice checks with an explanation after every answer. Retry as often as you like — nothing here is graded and symptoms are never gamified."
+        intro="6–7 questions per topic, with an explanation after every answer. Retry as often as you like — nothing here is graded and symptoms are never gamified."
       />
+
+      {missedCount > 0 && (
+        <div className="mb-6 nw-paper nw-paper--alt bg-[var(--color-accent-surface)] p-5">
+          <p className="flex items-center gap-2 font-display text-lg font-bold">
+            <RefreshCw size={18} aria-hidden />
+            Review what you missed
+          </p>
+          <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+            NestWise is holding {missedCount} question{missedCount === 1 ? "" : "s"} you've got
+            wrong before. Practise just those.
+          </p>
+          <ButtonLink href="/quiz/review" size="sm" className="mt-3">
+            Start review set
+          </ButtonLink>
+        </div>
+      )}
 
       <div className="space-y-3">
         {[...relevant, ...others].map((q) => {
           const best = bestBySlug.get(q.slug);
+          const count = Array.isArray(q.questions) ? (q.questions as unknown[]).length : 0;
           return (
             <Link
               key={q.id}
               href={`/quiz/${q.slug}`}
-              className="flex items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-soft)]"
+              className="nw-paper nw-paper--alt flex items-center justify-between gap-3 p-4"
             >
               <span>
-                <span className="block font-bold">{q.title}</span>
-                <span className="text-sm text-[var(--color-ink-soft)]">{q.category}</span>
+                <span className="block font-display text-base font-bold text-[var(--color-ink)]">
+                  {q.title}
+                </span>
+                <span className="text-sm text-[var(--color-ink-soft)]">
+                  {q.category} · {count} questions
+                </span>
               </span>
               {best ? (
                 <Badge tone="success">

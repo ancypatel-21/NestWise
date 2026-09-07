@@ -8,6 +8,7 @@ import { exerciseSeeds } from "../src/content/exercise";
 import { factSeeds } from "../src/content/facts";
 import { resourceSeeds } from "../src/content/resources";
 import { QUIZZES } from "../src/content/quizzes";
+import { LEARN_QUIZZES } from "../src/content/learn-quizzes";
 import { birthPostpartumSeeds } from "../src/content/birth-postpartum";
 import { childDevelopmentSeeds } from "../src/content/child-development";
 import { ACTIVITY_SEEDS } from "../src/content/activities";
@@ -51,7 +52,10 @@ async function seedContent() {
     };
     await db.content.upsert({ where: { slug: c.slug }, create: data, update: data });
   }
-  console.log(`  content: ${all.length} entries`);
+  // Prune content from earlier seed runs that no longer exists (e.g. older-age material).
+  const keep = all.map((c) => c.slug);
+  const pruned = await db.content.deleteMany({ where: { slug: { notIn: keep } } });
+  console.log(`  content: ${all.length} entries (pruned ${pruned.count} stale)`);
 }
 
 async function seedQuizzes() {
@@ -66,13 +70,27 @@ async function seedQuizzes() {
     };
     await db.quiz.upsert({ where: { slug: q.slug }, create: data, update: data });
   }
-  console.log(`  quizzes: ${QUIZZES.length}`);
+  for (const q of LEARN_QUIZZES) {
+    const data = {
+      slug: q.slug,
+      title: q.title,
+      category: q.category,
+      stage: "PREGNANCY" as const,
+      ageRange: null,
+      questions: q.questions as unknown as Prisma.InputJsonValue,
+    };
+    await db.quiz.upsert({ where: { slug: q.slug }, create: data, update: data });
+  }
+  const keepQ = [...QUIZZES.map((q) => q.slug), ...LEARN_QUIZZES.map((q) => q.slug)];
+  await db.quiz.deleteMany({ where: { slug: { notIn: keepQ } } });
+  console.log(`  quizzes: ${QUIZZES.length + LEARN_QUIZZES.length}`);
 }
 
 async function seedActivities() {
   for (const a of ACTIVITY_SEEDS) {
     await db.activity.upsert({ where: { slug: a.slug }, create: a, update: a });
   }
+  await db.activity.deleteMany({ where: { slug: { notIn: ACTIVITY_SEEDS.map((a) => a.slug) } } });
   console.log(`  activities: ${ACTIVITY_SEEDS.length}`);
 }
 
@@ -80,6 +98,9 @@ async function seedFamilyGames() {
   for (const g of FAMILY_GAME_SEEDS) {
     await db.familyGame.upsert({ where: { slug: g.slug }, create: g, update: g });
   }
+  await db.familyGame.deleteMany({
+    where: { slug: { notIn: FAMILY_GAME_SEEDS.map((g) => g.slug) } },
+  });
   console.log(`  family games: ${FAMILY_GAME_SEEDS.length}`);
 }
 
@@ -96,6 +117,7 @@ async function seedGames() {
     };
     await db.game.upsert({ where: { slug: g.slug }, create: data, update: data });
   }
+  await db.game.deleteMany({ where: { slug: { notIn: GAME_SEEDS.map((g) => g.slug) } } });
   console.log(`  learning games: ${GAME_SEEDS.length}`);
 }
 

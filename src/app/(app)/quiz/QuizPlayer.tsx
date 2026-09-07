@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Check, X, RotateCcw } from "lucide-react";
 import type { QuizQuestion } from "@/types";
 import { Button } from "@/components/ui/Button";
@@ -14,11 +14,13 @@ export function QuizPlayer({
   title,
   questions,
   childId,
+  recordAttempts = true,
 }: {
   quizSlug: string;
   title: string;
   questions: QuizQuestion[];
   childId?: string;
+  recordAttempts?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
@@ -26,6 +28,7 @@ export function QuizPlayer({
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
   const [, startTransition] = useTransition();
+  const missed = useRef<string[]>([]);
 
   const q = questions[index];
   const isLast = index === questions.length - 1;
@@ -35,14 +38,23 @@ export function QuizPlayer({
     setPicked(i);
     setRevealed(true);
     if (i === q.answerIndex) setScore((s) => s + 1);
+    else missed.current.push(q.prompt);
   }
 
   function next() {
     if (isLast) {
       setFinished(true);
-      startTransition(() => {
-        void recordQuizAttempt({ quizSlug, score, total: questions.length, childId });
-      });
+      if (recordAttempts) {
+        startTransition(() => {
+          void recordQuizAttempt({
+            quizSlug,
+            score,
+            total: questions.length,
+            missed: missed.current,
+            childId,
+          });
+        });
+      }
       return;
     }
     setIndex((n) => n + 1);
@@ -56,6 +68,7 @@ export function QuizPlayer({
     setRevealed(false);
     setScore(0);
     setFinished(false);
+    missed.current = [];
   }
 
   if (finished) {
@@ -65,11 +78,15 @@ export function QuizPlayer({
         <p className="text-sm font-semibold uppercase tracking-wide text-[var(--color-accent-strong)]">
           {title}
         </p>
-        <p className="mt-2 text-3xl font-extrabold">
+        <p className="mt-2 font-display text-3xl font-bold">
           {score} / {questions.length}
         </p>
         <p className="mt-1 text-[var(--color-ink-soft)]">
-          {passPct >= 70 ? "Nicely done." : "Worth another read, then try again."}
+          {passPct >= 80
+            ? "Nicely done — that's stuck."
+            : passPct >= 50
+              ? "Good going. A quick re-read of the missed ones will lock it in."
+              : "Worth another read of the lesson, then try again."}
         </p>
         <Button onClick={restart} variant="secondary" className="mt-4">
           <RotateCcw size={16} aria-hidden /> Try again
@@ -86,7 +103,7 @@ export function QuizPlayer({
         className="mb-4"
       />
       <Card>
-        <p className="text-lg font-bold">{q.prompt}</p>
+        <p className="font-display text-lg font-bold">{q.prompt}</p>
         <div className="mt-4 space-y-2">
           {q.choices.map((choice, i) => {
             const isAnswer = i === q.answerIndex;
@@ -97,8 +114,8 @@ export function QuizPlayer({
                 onClick={() => choose(i)}
                 disabled={revealed}
                 className={cn(
-                  "flex w-full items-center justify-between gap-2 rounded-[var(--radius-md)] border p-3 text-left text-sm font-semibold transition-colors",
-                  !revealed && "border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-muted)]",
+                  "flex w-full items-center justify-between gap-2 border-2 p-3 text-left text-sm font-semibold transition-colors [border-radius:14px_10px_13px_11px/11px_13px_10px_14px]",
+                  !revealed && "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-graphite)]",
                   revealed && isAnswer && "border-[var(--color-success)] bg-[var(--color-success-surface)] text-[var(--color-success)]",
                   revealed && isPicked && !isAnswer && "border-[var(--color-danger)] bg-[var(--color-danger-surface)] text-[var(--color-danger)]",
                   revealed && !isAnswer && !isPicked && "border-[var(--color-border)] opacity-70",
@@ -113,7 +130,7 @@ export function QuizPlayer({
         </div>
 
         {revealed && (
-          <div className="mt-4 rounded-[var(--radius-md)] bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-ink-soft)]">
+          <div className="mt-4 border-2 border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-ink-soft)] [border-radius:12px]">
             {q.explanation}
           </div>
         )}
