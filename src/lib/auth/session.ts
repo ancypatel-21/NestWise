@@ -5,8 +5,8 @@ import type { Role } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getFamilyStage } from "@/lib/personalization/stage";
 import {
-  applyModeOverride,
-  isOverridableMode,
+  applyJourneyOverride,
+  isJourney,
   MODE_OVERRIDE_COOKIE,
 } from "@/lib/personalization/mode-override";
 import type { FamilyContext } from "@/types";
@@ -47,8 +47,8 @@ export const getFamilyContext = cache(async (): Promise<FamilyContext | null> =>
 
   const naturalStage = getFamilyStage(pregnancyProfile, children);
   const override = (await cookies()).get(MODE_OVERRIDE_COOKIE)?.value;
-  const stage = isOverridableMode(override)
-    ? applyModeOverride(naturalStage, override, pregnancyProfile, children)
+  const stage = isJourney(override)
+    ? applyJourneyOverride(naturalStage, override, pregnancyProfile, children)
     : naturalStage;
 
   return {

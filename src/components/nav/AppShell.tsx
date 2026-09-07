@@ -2,7 +2,11 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { Search, Settings } from "lucide-react";
 import type { FamilyContext } from "@/types";
-import { availableModes, MODE_OVERRIDE_COOKIE } from "@/lib/personalization/mode-override";
+import {
+  availableJourneys,
+  journeyForMode,
+  MODE_OVERRIDE_COOKIE,
+} from "@/lib/personalization/mode-override";
 import { mobileNavForStage, navForStage } from "./nav-config";
 import { MobileTabBar, SidebarNav } from "./NavLinks";
 import { ModeSwitcher } from "./ModeSwitcher";
@@ -24,7 +28,7 @@ export async function AppShell({
 }) {
   const items = navForStage(ctx.stage);
   const mobileItems = mobileNavForStage(ctx.stage);
-  const modeOptions = availableModes(ctx.pregnancyProfile, ctx.children);
+  const journeyOptions = availableJourneys(ctx.pregnancyProfile, ctx.children);
   const overrideActive = !!(await cookies()).get(MODE_OVERRIDE_COOKIE)?.value;
 
   return (
@@ -72,8 +76,8 @@ export async function AppShell({
             <StagePill stage={ctx.stage} />
             <div className="flex items-center gap-2">
               <ModeSwitcher
-                current={ctx.stage.mode}
-                options={modeOptions}
+                current={journeyForMode(ctx.stage.mode)}
+                options={journeyOptions}
                 overrideActive={overrideActive}
               />
               <Link

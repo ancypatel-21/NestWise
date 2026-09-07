@@ -5,7 +5,11 @@ import { computeStreak } from "@/lib/streak";
 import { buildGame, nextLevel, roundsForLevel } from "@/lib/games/engine";
 import { isKidAllowedPath } from "@/lib/kids-mode";
 import { dueDateFromWeek } from "@/lib/personalization/pregnancy";
-import { applyModeOverride, availableModes } from "@/lib/personalization/mode-override";
+import {
+  applyJourneyOverride,
+  availableJourneys,
+  journeyForMode,
+} from "@/lib/personalization/mode-override";
 
 const baseContent = {
   id: "x",
@@ -97,41 +101,52 @@ describe("manual journey switch (PRD §3, §6)", () => {
     createdAt: new Date("2024-06-01"),
   } as never;
 
-  it("always offers all four journeys, flagging which have data", () => {
-    expect(availableModes(null, []).map((m) => m.value)).toEqual([
+  it("always offers all three journeys, flagging which have data", () => {
+    expect(availableJourneys(null, []).map((m) => m.value)).toEqual([
       "pregnancy",
-      "birth-countdown",
-      "postpartum",
+      "birth-postpartum",
       "child",
     ]);
     // pregnancy profile but no child
-    expect(availableModes(profile, []).map((m) => [m.value, m.hasData])).toEqual([
+    expect(availableJourneys(profile, []).map((m) => [m.value, m.hasData])).toEqual([
       ["pregnancy", true],
-      ["birth-countdown", true],
-      ["postpartum", false],
+      ["birth-postpartum", true],
       ["child", false],
     ]);
     // both on file
-    expect(availableModes(profile, [toddler]).every((m) => m.hasData)).toBe(true);
+    expect(availableJourneys(profile, [toddler]).every((m) => m.hasData)).toBe(true);
+  });
+
+  it("maps a resolved mode back to its journey", () => {
+    expect(journeyForMode("pregnancy")).toBe("pregnancy");
+    expect(journeyForMode("birth-countdown")).toBe("birth-postpartum");
+    expect(journeyForMode("postpartum")).toBe("birth-postpartum");
+    expect(journeyForMode("child")).toBe("child");
+    expect(journeyForMode("unset")).toBeNull();
   });
 
   it("re-derives an accurate stage for the chosen journey", () => {
     const natural = getFamilyStage(profile, [], today);
     expect(natural.mode).toBe("pregnancy");
 
-    const forced = applyModeOverride(natural, "birth-countdown", profile, [], today);
-    expect(forced.mode).toBe("birth-countdown");
-    expect(forced.part).toBe(2);
-    expect(forced.pregnancyWeek).toBe(20);
+    // Birth & Postpartum with a pregnancy but no child -> pre-birth
+    const prebirth = applyJourneyOverride(natural, "birth-postpartum", profile, [], today);
+    expect(prebirth.mode).toBe("birth-countdown");
+    expect(prebirth.part).toBe(2);
+    expect(prebirth.pregnancyWeek).toBe(20);
 
-    const toChild = applyModeOverride(natural, "child", profile, [toddler], today);
+    // Birth & Postpartum once a baby is on file -> postpartum
+    const post = applyJourneyOverride(natural, "birth-postpartum", profile, [toddler], today);
+    expect(post.mode).toBe("postpartum");
+
+    const toChild = applyJourneyOverride(natural, "child", profile, [toddler], today);
     expect(toChild.mode).toBe("child");
     expect(toChild.primaryChildName).toBe("Bo");
   });
 
   it("still opens a journey with no data on file, just without specifics", () => {
     const natural = getFamilyStage(profile, [], today);
-    const toChild = applyModeOverride(natural, "child", profile, [], today);
+    const toChild = applyJourneyOverride(natural, "child", profile, [], today);
     expect(toChild).toEqual({ part: 3, mode: "child" });
     expect(toChild.primaryChildId).toBeUndefined();
   });

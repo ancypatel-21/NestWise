@@ -3,27 +3,18 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronDown, Compass } from "lucide-react";
-import type { StageMode } from "@/types";
-import type { OverridableMode } from "@/lib/personalization/mode-override";
-import { setModeOverride } from "@/lib/actions/mode";
+import type { Journey } from "@/lib/personalization/mode-override";
+import { setJourneyOverride } from "@/lib/actions/mode";
 import { cn } from "@/lib/utils";
 
-const CURRENT_LABEL: Partial<Record<StageMode, string>> = {
-  pregnancy: "Pregnancy",
-  "birth-countdown": "Pre-birth",
-  postpartum: "Postpartum",
-  child: "Child & family",
-  unset: "Set up",
-};
-
-/** Header dropdown to jump between journeys the family has data for (PRD §3, §6). */
+/** Header dropdown to jump between the three journeys (PRD §3, §6). */
 export function ModeSwitcher({
   current,
   options,
   overrideActive,
 }: {
-  current: StageMode;
-  options: Array<{ value: OverridableMode; label: string; hasData: boolean }>;
+  current: Journey | null;
+  options: Array<{ value: Journey; label: string; hasData: boolean }>;
   overrideActive: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -49,10 +40,12 @@ export function ModeSwitcher({
 
   if (options.length === 0) return null;
 
-  function choose(mode: string | null) {
+  const currentLabel = options.find((o) => o.value === current)?.label ?? "Set up";
+
+  function choose(journey: string | null) {
     setOpen(false);
     startTransition(async () => {
-      await setModeOverride(mode);
+      await setJourneyOverride(journey);
       router.refresh();
     });
   }
@@ -69,14 +62,14 @@ export function ModeSwitcher({
       >
         <Compass size={15} aria-hidden />
         <span className="hidden sm:inline">Journey:</span>
-        {CURRENT_LABEL[current] ?? "Journey"}
+        {currentLabel}
         <ChevronDown size={15} aria-hidden className={cn("transition-transform", open && "rotate-180")} />
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-[var(--radius-lg)] border-2 border-[var(--color-graphite)] bg-[var(--color-surface)] p-1 shadow-[4px_6px_0_rgba(58,50,40,0.2)]"
+          className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-[var(--radius-lg)] border-2 border-[var(--color-graphite)] bg-[var(--color-surface)] p-1 shadow-[4px_6px_0_rgba(58,50,40,0.2)]"
         >
           <p className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--color-ink-faint)]">
             Switch journey
