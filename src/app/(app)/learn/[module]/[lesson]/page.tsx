@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { completedSlugs, savedSlugs } from "@/lib/content";
 import { ALL_LESSONS, LEARN_MODULES } from "@/content/learn-modules";
 import { ContentDetail } from "@/components/ContentDetail";
+import { LessonCheck } from "@/components/LessonCheck";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { VideoCard } from "@/components/ui/VideoCard";
@@ -63,10 +64,13 @@ export default async function LessonPage({
       saved={saved.has(content.slug)}
       completed={done.has(content.slug)}
       showCompletion
+      interactive
     >
       {spec?.video && (
         <VideoCard query={spec.video} minutes={spec.minutes} />
       )}
+
+      <LessonCheck topic={content.title} />
 
       {related.length > 0 && (
         <Card className="mt-6">

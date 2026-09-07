@@ -4,11 +4,14 @@ import { getSessionUser, getFamilyContext } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { answerQuestion } from "@/lib/ai/answer";
 import { socraticFeedback, socraticQuestion } from "@/lib/ai/socratic";
+import { rephrasePassage } from "@/lib/ai/rephrase";
 import { weeksToMonths } from "@/lib/personalization/pregnancy";
 import { track } from "@/lib/analytics";
 
 const bodySchema = z.object({
-  mode: z.enum(["answer", "socratic-question", "socratic-feedback"]).default("answer"),
+  mode: z
+    .enum(["answer", "socratic-question", "socratic-feedback", "rephrase"])
+    .default("answer"),
   question: z.string().max(1000).optional(),
   module: z.string().optional(),
   detail: z.enum(["simple", "standard", "deep"]).optional(),
@@ -17,7 +20,22 @@ const bodySchema = z.object({
   socraticQuestion: z.string().max(600).optional(),
   modelAnswer: z.string().max(2000).optional(),
   learnerAnswer: z.string().max(2000).optional(),
+  // rephrase
+  text: z.string().max(2000).optional(),
+  style: z.enum(["simple", "example", "personal"]).optional(),
 });
+
+function readerContext(ctx: Awaited<ReturnType<typeof getFamilyContext>>): string {
+  if (!ctx) return "";
+  const bits: string[] = [];
+  const s = ctx.stage;
+  if (s.mode === "pregnancy" && s.pregnancyWeek) bits.push(`${s.pregnancyWeek} weeks pregnant`);
+  if (s.mode === "child" && s.childAgeMonths != null) bits.push(`child aged ${s.childAgeMonths} months`);
+  if (ctx.role === "PARTNER") bits.push("the partner, not the person expecting");
+  for (const d of ctx.personalization.dietaryPreferences) bits.push(d.toLowerCase());
+  for (const a of ctx.personalization.allergies) bits.push(`${a} allergy`);
+  return bits.join(", ");
+}
 
 function stageLabel(ctx: Awaited<ReturnType<typeof getFamilyContext>>): string {
   if (!ctx) return "not set up yet";
@@ -47,6 +65,19 @@ export async function POST(req: Request) {
   if (body.mode === "socratic-question") {
     const res = await socraticQuestion(body.topic, stageCtx);
     track("socratic_question", { llm: res.llmUsed });
+    return NextResponse.json(res);
+  }
+
+  if (body.mode === "rephrase") {
+    if (!body.text || !body.style) {
+      return NextResponse.json({ error: "Nothing to rephrase." }, { status: 400 });
+    }
+    const res = await rephrasePassage(
+      body.text,
+      body.style,
+      body.style === "personal" ? readerContext(ctx) : undefined,
+    );
+    track("rephrase", { style: body.style, llm: res.llmUsed });
     return NextResponse.json(res);
   }
 

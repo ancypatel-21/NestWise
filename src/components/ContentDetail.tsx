@@ -1,6 +1,7 @@
 import type { Content } from "@prisma/client";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ContentBlocks } from "@/components/ui/ContentBlocks";
+import { ExplainableContent } from "@/components/ExplainableContent";
 import { BookmarkButton } from "@/components/ui/BookmarkButton";
 import { CompletionToggle } from "@/components/ui/CompletionToggle";
 import { ListenButton } from "@/components/ui/ListenButton";
@@ -21,6 +22,7 @@ export function ContentDetail({
   completed = false,
   showCompletion = false,
   hero,
+  interactive = false,
   children,
 }: {
   content: Content;
@@ -32,6 +34,8 @@ export function ContentDetail({
   completed?: boolean;
   showCompletion?: boolean;
   hero?: React.ReactNode;
+  /** When true, each paragraph offers an AI "Explain differently" action (lesson pages). */
+  interactive?: boolean;
   children?: React.ReactNode;
 }) {
   const refs = content.referenceUrls ?? [];
@@ -63,7 +67,11 @@ export function ContentDetail({
       {hero && <div className="mb-6">{hero}</div>}
 
       <div className="nw-paper p-5">
-        <ContentBlocks blocks={blocksOf(content)} />
+        {interactive ? (
+          <ExplainableContent blocks={blocksOf(content)} />
+        ) : (
+          <ContentBlocks blocks={blocksOf(content)} />
+        )}
       </div>
 
       {children}

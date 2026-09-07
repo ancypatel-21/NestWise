@@ -53,6 +53,57 @@ const DETAIL_INSTRUCTIONS: Record<DetailLevel, string> = {
     "Give a thorough explanation: the what, the why, what usually helps, what to avoid, and what to watch for. Use short paragraphs and bullets. Still plain-language.",
 };
 
+export type RephraseStyle = "simple" | "example" | "personal";
+
+const REPHRASE_INSTRUCTION: Record<RephraseStyle, string> = {
+  simple:
+    "Rewrite the passage in the plainest possible language. Short sentences. No jargon. Keep every fact; add nothing new.",
+  example:
+    "Explain the passage by adding ONE short, concrete everyday example that illustrates it. Keep it grounded in the passage; invent no new medical facts.",
+  personal:
+    "Re-explain the passage so it speaks directly to this reader's situation (given below). Highlight the parts that matter most for them. Keep every fact; add no new claims.",
+};
+
+/**
+ * Rephrase a passage of curated lesson text in a different way. Returns null when no model is
+ * configured (the caller then uses a lighter deterministic transform).
+ */
+export async function rephrase(
+  text: string,
+  style: RephraseStyle,
+  readerContext?: string,
+): Promise<string | null> {
+  if (!isLlmEnabled()) return null;
+  const c = getClient();
+  if (!c) return null;
+  try {
+    const res = await c.messages.create({
+      model: MODEL,
+      max_tokens: 600,
+      system:
+        "You are a patient tutor for expecting and new parents. You rephrase existing, reviewed lesson text — you never introduce new facts, medication advice, or claims about an individual's health. Keep it warm and plain. 2–4 sentences or a few short bullets.",
+      messages: [
+        {
+          role: "user",
+          content:
+            `${REPHRASE_INSTRUCTION[style]}\n\n` +
+            (style === "personal" && readerContext ? `READER: ${readerContext}\n\n` : "") +
+            `PASSAGE:\n${text}`,
+        },
+      ],
+    });
+    return (
+      res.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("\n")
+        .trim() || null
+    );
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Returns a natural-language answer grounded in `context`, or null when no model is configured
  * (the caller then uses its deterministic composer).
