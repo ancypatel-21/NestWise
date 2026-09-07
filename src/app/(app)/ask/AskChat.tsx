@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { Send, Sparkles, BookOpen, Baby } from "lucide-react";
+import { Send, Sparkles, BookOpen, Baby, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EmergencyBanner } from "@/components/safety";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,12 @@ interface Turn {
   citations?: Citation[];
   followUps?: string[];
   emergency?: boolean;
-  grounded?: boolean;
+}
+
+interface Socratic {
+  question: string;
+  modelAnswer: string;
+  citations: Citation[];
 }
 
 const SAMPLES = [
@@ -28,7 +33,6 @@ const SAMPLES = [
   "Which foods are high in iron?",
   "What should I pack for the hospital?",
   "How do I burp a newborn?",
-  "Is it normal for my toddler to have tantrums?",
 ];
 
 const DETAILS: { key: Detail; label: string }[] = [
@@ -42,7 +46,13 @@ export function AskChat({ module }: { module?: string }) {
   const [value, setValue] = useState("");
   const [detail, setDetail] = useState<Detail>("standard");
   const [loading, setLoading] = useState(false);
+  const [socratic, setSocratic] = useState<Socratic | null>(null);
+  const [socraticAnswer, setSocraticAnswer] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
+
+  function scrollDown() {
+    requestAnimationFrame(() => listRef.current?.scrollTo(0, listRef.current.scrollHeight));
+  }
 
   async function ask(question: string, level: Detail = detail) {
     if (!question.trim() || loading) return;
@@ -53,38 +63,90 @@ export function AskChat({ module }: { module?: string }) {
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question, module, detail: level }),
+        body: JSON.stringify({ mode: "answer", question, module, detail: level }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setTurns((t) => [
-          ...t,
-          { role: "assistant", text: data.error ?? "Something went wrong. Please try again." },
-        ]);
-      } else {
-        setTurns((t) => [
-          ...t,
-          {
-            role: "assistant",
-            text: data.answer,
-            citations: data.citations,
-            followUps: data.followUps,
-            emergency: data.emergency,
-            grounded: true,
-          },
-        ]);
-      }
+      setTurns((t) => [
+        ...t,
+        res.ok
+          ? {
+              role: "assistant",
+              text: data.answer,
+              citations: data.citations,
+              followUps: data.followUps,
+              emergency: data.emergency,
+            }
+          : { role: "assistant", text: data.error ?? "Something went wrong." },
+      ]);
     } catch {
       setTurns((t) => [
         ...t,
-        {
-          role: "assistant",
-          text: "I can't reach the tutor right now. The Learn, Nutrition and Symptom sections still work without it.",
-        },
+        { role: "assistant", text: "I can't reach the tutor right now. The Learn and Symptom sections still work." },
       ]);
     } finally {
       setLoading(false);
-      requestAnimationFrame(() => listRef.current?.scrollTo(0, listRef.current.scrollHeight));
+      scrollDown();
+    }
+  }
+
+  async function testMe() {
+    if (loading) return;
+    const topic = value.trim();
+    setValue("");
+    setLoading(true);
+    setTurns((t) => [
+      ...t,
+      { role: "user", text: topic ? `Test me on: ${topic}` : "Test me on this stage" },
+    ]);
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mode: "socratic-question", topic: topic || undefined }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTurns((t) => [
+          ...t,
+          { role: "assistant", text: `Have a go at this in your own words:\n\n${data.question}` },
+        ]);
+        setSocratic({ question: data.question, modelAnswer: data.modelAnswer, citations: data.citations ?? [] });
+        setSocraticAnswer("");
+      } else {
+        setTurns((t) => [...t, { role: "assistant", text: data.error ?? "Couldn't start a check." }]);
+      }
+    } finally {
+      setLoading(false);
+      scrollDown();
+    }
+  }
+
+  async function submitSocratic() {
+    if (!socratic || loading) return;
+    const learnerAnswer = socraticAnswer.trim();
+    setLoading(true);
+    setTurns((t) => [...t, { role: "user", text: learnerAnswer || "(show me the answer)" }]);
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          mode: "socratic-feedback",
+          socraticQuestion: socratic.question,
+          modelAnswer: socratic.modelAnswer,
+          learnerAnswer,
+        }),
+      });
+      const data = await res.json();
+      setTurns((t) => [
+        ...t,
+        { role: "assistant", text: data.feedback ?? socratic.modelAnswer, citations: socratic.citations },
+      ]);
+    } finally {
+      setSocratic(null);
+      setSocraticAnswer("");
+      setLoading(false);
+      scrollDown();
     }
   }
 
@@ -112,16 +174,13 @@ export function AskChat({ module }: { module?: string }) {
         ))}
       </div>
 
-      <div
-        ref={listRef}
-        className="nw-paper max-h-[55vh] space-y-4 overflow-y-auto p-4"
-      >
+      <div ref={listRef} className="nw-paper max-h-[52vh] space-y-4 overflow-y-auto p-4">
         {turns.length === 0 && (
           <div className="py-6 text-center">
             <Sparkles className="mx-auto text-[var(--color-accent-strong)]" aria-hidden />
             <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-ink-soft)]">
-              Ask anything about your stage. NestWise finds the relevant reviewed lessons, explains
-              in plain language, shows its sources, and sends urgent questions straight to real help.
+              Ask anything about your stage — or hit <strong>Test me</strong> and NestWise will
+              quiz <em>you</em> first, then give feedback on what you wrote.
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               {SAMPLES.map((s) => (
@@ -138,10 +197,7 @@ export function AskChat({ module }: { module?: string }) {
         )}
 
         {turns.map((turn, i) => (
-          <div
-            key={i}
-            className={cn("flex", turn.role === "user" ? "justify-end" : "justify-start")}
-          >
+          <div key={i} className={cn("flex", turn.role === "user" ? "justify-end" : "justify-start")}>
             <div
               className={cn(
                 "max-w-[88%] px-4 py-3 text-sm [border-radius:16px_10px_15px_11px/11px_15px_10px_16px]",
@@ -156,7 +212,6 @@ export function AskChat({ module }: { module?: string }) {
                 </p>
               )}
               <p className="whitespace-pre-wrap">{turn.text}</p>
-
               {turn.citations && turn.citations.length > 0 && (
                 <p className="mt-3 flex flex-wrap items-center gap-1 text-xs text-[var(--color-ink-soft)]">
                   <BookOpen size={13} aria-hidden />
@@ -171,7 +226,6 @@ export function AskChat({ module }: { module?: string }) {
                   ))}
                 </p>
               )}
-
               {turn.followUps && turn.followUps.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {turn.followUps.map((f) => (
@@ -189,10 +243,31 @@ export function AskChat({ module }: { module?: string }) {
           </div>
         ))}
 
+        {socratic && (
+          <div className="border-2 border-[var(--color-graphite)] bg-[var(--color-accent-surface)] p-3 [border-radius:16px_10px_15px_11px/11px_15px_10px_16px]">
+            <p className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-accent-strong)]">
+              <GraduationCap size={14} aria-hidden /> Your answer
+            </p>
+            <textarea
+              value={socraticAnswer}
+              onChange={(e) => setSocraticAnswer(e.target.value)}
+              rows={3}
+              placeholder="Type what you think, in your own words…"
+              className="mt-2 w-full border-2 border-[var(--color-graphite)] bg-[var(--color-surface)] p-2 text-sm [border-radius:12px_9px_11px_10px/10px_11px_9px_12px]"
+            />
+            <div className="mt-2 flex gap-2">
+              <Button size="sm" onClick={submitSocratic} disabled={loading}>
+                Check my answer
+              </Button>
+              <Button size="sm" variant="ghost" onClick={submitSocratic} disabled={loading}>
+                Just show me
+              </Button>
+            </div>
+          </div>
+        )}
+
         {loading && (
-          <p className="text-sm text-[var(--color-ink-faint)]">
-            NestWise is reading the relevant lessons…
-          </p>
+          <p className="text-sm text-[var(--color-ink-faint)]">NestWise is thinking…</p>
         )}
       </div>
 
@@ -201,15 +276,19 @@ export function AskChat({ module }: { module?: string }) {
           e.preventDefault();
           ask(value);
         }}
-        className="flex gap-2"
+        className="flex flex-wrap gap-2"
       >
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Ask your tutor about this stage…"
-          aria-label="Your question"
+          placeholder="Ask about this stage, or type a topic and hit Test me…"
+          aria-label="Your question or topic"
           className="min-h-11 flex-1 border-2 border-[var(--color-graphite)] bg-[var(--color-surface)] px-4 text-sm [border-radius:14px_9px_13px_10px/10px_13px_9px_14px]"
         />
+        <Button type="button" variant="secondary" onClick={testMe} disabled={loading}>
+          <GraduationCap size={15} aria-hidden />
+          Test me
+        </Button>
         <Button type="submit" disabled={loading || !value.trim()}>
           <Send size={16} aria-hidden />
           <span className="sr-only">Send</span>
@@ -218,8 +297,8 @@ export function AskChat({ module }: { module?: string }) {
 
       <p className="flex items-center gap-1.5 text-xs text-[var(--color-ink-faint)]">
         <Baby size={13} aria-hidden />
-        Answers are grounded in NestWise's reviewed content and always cite their sources. If
-        NestWise doesn't have reviewed material on your question, it will say so rather than guess.
+        Answers are grounded in NestWise's reviewed content and cite their sources. If NestWise
+        doesn't have reviewed material on your question, it says so rather than guess.
       </p>
     </div>
   );

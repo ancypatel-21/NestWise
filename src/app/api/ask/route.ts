@@ -3,13 +3,20 @@ import { z } from "zod";
 import { getSessionUser, getFamilyContext } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { answerQuestion } from "@/lib/ai/answer";
+import { socraticFeedback, socraticQuestion } from "@/lib/ai/socratic";
 import { weeksToMonths } from "@/lib/personalization/pregnancy";
 import { track } from "@/lib/analytics";
 
 const bodySchema = z.object({
-  question: z.string().min(3).max(1000),
+  mode: z.enum(["answer", "socratic-question", "socratic-feedback"]).default("answer"),
+  question: z.string().max(1000).optional(),
   module: z.string().optional(),
   detail: z.enum(["simple", "standard", "deep"]).optional(),
+  // socratic
+  topic: z.string().max(120).optional(),
+  socraticQuestion: z.string().max(600).optional(),
+  modelAnswer: z.string().max(2000).optional(),
+  learnerAnswer: z.string().max(2000).optional(),
 });
 
 function stageLabel(ctx: Awaited<ReturnType<typeof getFamilyContext>>): string {
@@ -28,20 +35,46 @@ export async function POST(req: Request) {
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: "Please enter a question." }, { status: 400 });
+    return NextResponse.json({ error: "Bad request." }, { status: 400 });
   }
-
+  const body = parsed.data;
   const ctx = await getFamilyContext();
-  const result = await answerQuestion(parsed.data.question, {
+  const stageCtx = {
     pregnancyWeek: ctx?.stage.pregnancyWeek,
     childAgeMonths: ctx?.stage.childAgeMonths,
+  };
+
+  if (body.mode === "socratic-question") {
+    const res = await socraticQuestion(body.topic, stageCtx);
+    track("socratic_question", { llm: res.llmUsed });
+    return NextResponse.json(res);
+  }
+
+  if (body.mode === "socratic-feedback") {
+    if (!body.socraticQuestion || !body.modelAnswer) {
+      return NextResponse.json({ error: "Missing question." }, { status: 400 });
+    }
+    const res = await socraticFeedback({
+      question: body.socraticQuestion,
+      modelAnswer: body.modelAnswer,
+      learnerAnswer: body.learnerAnswer ?? "",
+    });
+    track("socratic_feedback", { llm: res.llmUsed });
+    return NextResponse.json(res);
+  }
+
+  // default: answer a question
+  if (!body.question || body.question.trim().length < 3) {
+    return NextResponse.json({ error: "Please enter a question." }, { status: 400 });
+  }
+  const result = await answerQuestion(body.question, {
+    ...stageCtx,
     role: ctx?.role,
-    module: parsed.data.module,
-    detail: parsed.data.detail,
+    module: body.module,
+    detail: body.detail,
     stageLabel: stageLabel(ctx),
   });
 
-  // Audit trail. Stored under the user's own account; deletable with the account.
   await db.askLog.create({
     data: {
       userId: user.id,
