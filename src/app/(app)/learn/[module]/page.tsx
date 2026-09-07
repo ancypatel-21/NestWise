@@ -80,17 +80,28 @@ export default async function ModulePage({
         })}
       </ol>
 
-      {quiz && (
-        <div className="mt-6 nw-paper nw-paper--alt bg-[var(--color-accent-surface)] p-5">
-          <p className="font-display text-lg font-bold">Module quiz</p>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        {quiz && (
+          <div className="nw-paper nw-paper--alt bg-[var(--color-accent-surface)] p-5">
+            <p className="font-display text-lg font-bold">Module quiz</p>
+            <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+              {(quiz.questions as unknown[]).length} questions covering the whole module.
+            </p>
+            <ButtonLink href={`/quiz/${quiz.slug}`} size="sm" className="mt-3">
+              Take the quiz
+            </ButtonLink>
+          </div>
+        )}
+        <div className="nw-paper p-5">
+          <p className="font-display text-lg font-bold">Flashcards</p>
           <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-            {(quiz.questions as unknown[]).length} questions covering this whole module.
+            One card per lesson, from its key takeaways. Flip and self-rate.
           </p>
-          <ButtonLink href={`/quiz/${quiz.slug}`} size="sm" className="mt-3">
-            Take the quiz
+          <ButtonLink href={`/flashcards/${meta.slug}`} size="sm" variant="secondary" className="mt-3">
+            Study {meta.lessons.length} cards
           </ButtonLink>
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -25,20 +25,29 @@ export async function queueMissedForReview(prompts: string[]): Promise<void> {
   await queueForReview(prompts.slice(0, 40), user.id);
 }
 
-const gradeSchema = z.object({ prompt: z.string().min(1), correct: z.boolean() });
+const gradeSchema = z.object({ prompt: z.string().min(1).max(300), correct: z.boolean() });
 
-/** Grade one review card and reschedule it. */
+/**
+ * Grade one review item (a missed quiz question OR a flashcard, keyed by "card:<slug>") and
+ * reschedule it. Upserts, so flashcards enter spaced repetition the first time you rate one.
+ */
 export async function gradeReview(input: z.infer<typeof gradeSchema>): Promise<void> {
   const user = await requireUser();
   const { prompt, correct } = gradeSchema.parse(input);
-  const item = await db.reviewItem.findUnique({
+  const existing = await db.reviewItem.findUnique({
     where: { userId_prompt: { userId: user.id, prompt } },
   });
-  if (!item) return;
-  const { box, dueAt } = nextSchedule(item.box, correct);
-  await db.reviewItem.update({
-    where: { id: item.id },
-    data: { box, dueAt, lastResult: correct ? "right" : "wrong", reviewedAt: new Date() },
+  const { box, dueAt } = nextSchedule(existing?.box ?? 1, correct);
+  await db.reviewItem.upsert({
+    where: { userId_prompt: { userId: user.id, prompt } },
+    create: {
+      userId: user.id,
+      prompt,
+      box,
+      dueAt,
+      lastResult: correct ? "right" : "wrong",
+    },
+    update: { box, dueAt, lastResult: correct ? "right" : "wrong", reviewedAt: new Date() },
   });
-  track("review_graded", { correct, box });
+  track("review_graded", { correct, box, card: prompt.startsWith("card:") });
 }

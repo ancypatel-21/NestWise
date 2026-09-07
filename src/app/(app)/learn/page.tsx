@@ -52,6 +52,9 @@ export default async function LearnHubPage() {
                 <ButtonLink href="/quiz/build" size="sm" variant="secondary">
                   Quiz me
                 </ButtonLink>
+                <ButtonLink href="/flashcards" size="sm" variant="secondary">
+                  Flashcards
+                </ButtonLink>
               </div>
             </>
           ) : (

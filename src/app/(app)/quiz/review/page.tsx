@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { getSessionUser, requireFamilyContext } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { QUESTION_BY_PROMPT } from "@/lib/quiz-index";
+import { CARD_PREFIX, flashcardBySlug, lessonSlugFromCardKey } from "@/lib/flashcards";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Callout } from "@/components/ui/Callout";
+import { ButtonLink } from "@/components/ui/Button";
 import { ReviewDeck, type ReviewCard } from "./ReviewDeck";
 
 export const metadata: Metadata = { title: "Daily review" };
@@ -17,15 +19,19 @@ export default async function ReviewPage() {
   const due = await db.reviewItem.findMany({
     where: { userId: user.id, dueAt: { lte: new Date() } },
     orderBy: { dueAt: "asc" },
-    take: 15,
+    take: 20,
   });
 
-  const cards: ReviewCard[] = due
-    .map((item) => {
+  const cards: ReviewCard[] = [];
+  for (const item of due) {
+    if (item.prompt.startsWith(CARD_PREFIX)) {
+      const card = flashcardBySlug(lessonSlugFromCardKey(item.prompt));
+      if (card) cards.push({ kind: "flashcard", card });
+    } else {
       const question = QUESTION_BY_PROMPT.get(item.prompt);
-      return question ? { prompt: item.prompt, question } : null;
-    })
-    .filter((c): c is ReviewCard => c !== null);
+      if (question) cards.push({ kind: "question", prompt: item.prompt, question });
+    }
+  }
 
   const totalTracked = await db.reviewItem.count({ where: { userId: user.id } });
 
@@ -33,7 +39,7 @@ export default async function ReviewPage() {
     <div className="mx-auto max-w-2xl">
       <PageHeader
         title="Daily review"
-        intro="A few questions you've got wrong before, brought back at spaced intervals so they actually stick."
+        intro="A mix of questions you've missed and flashcards you've flagged — brought back at spaced intervals so they actually stick."
         backHref="/quiz"
         backLabel="Quizzes"
       />
@@ -41,14 +47,19 @@ export default async function ReviewPage() {
       {cards.length === 0 ? (
         <EmptyState title="Nothing due — you're on top of it">
           {totalTracked > 0
-            ? `NestWise is tracking ${totalTracked} question${totalTracked === 1 ? "" : "s"}. They'll come back for review over the next few days.`
-            : "Miss a question in any quiz and it'll show up here for spaced review."}
+            ? `NestWise is tracking ${totalTracked} item${totalTracked === 1 ? "" : "s"}. They'll come back over the next few days.`
+            : "Miss a quiz question or flag a flashcard, and it'll show up here for spaced review."}
+          <div className="mt-3">
+            <ButtonLink href="/flashcards" size="sm" variant="secondary">
+              Study flashcards
+            </ButtonLink>
+          </div>
         </EmptyState>
       ) : (
         <>
           <Callout tone="tip" className="mb-4">
-            {cards.length} card{cards.length === 1 ? "" : "s"} due. Get one right and it moves to a
-            longer interval; miss it and it comes back sooner.
+            {cards.length} due. Get one right and it moves to a longer interval; miss it and it
+            comes back sooner.
           </Callout>
           <ReviewDeck cards={cards} />
         </>
