@@ -6,20 +6,14 @@ import { requireUser } from "@/lib/auth/session";
 import { nextSchedule } from "@/lib/review";
 import { track } from "@/lib/analytics";
 
-/** Add missed questions to the review queue (called after a quiz). Idempotent per prompt.
- * `confident` marks a "confidently wrong" answer — a genuine misconception worth surfacing first. */
-export async function queueForReview(
-  prompts: string[],
-  userId: string,
-  opts: { confident?: boolean } = {},
-): Promise<void> {
+/** Add missed questions to the review queue (called after a quiz). Idempotent per prompt. */
+export async function queueForReview(prompts: string[], userId: string): Promise<void> {
   const clean = [...new Set(prompts.map((p) => p.trim()).filter(Boolean))].slice(0, 40);
-  const result = opts.confident ? "confident-wrong" : "wrong";
   for (const prompt of clean) {
     await db.reviewItem.upsert({
       where: { userId_prompt: { userId, prompt } },
-      create: { userId, prompt, box: 1, dueAt: new Date(), lastResult: result },
-      update: { box: 1, dueAt: new Date(), lastResult: result },
+      create: { userId, prompt, box: 1, dueAt: new Date(), lastResult: "wrong" },
+      update: { box: 1, dueAt: new Date(), lastResult: "wrong" },
     });
   }
 }

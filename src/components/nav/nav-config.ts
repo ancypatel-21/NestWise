@@ -10,6 +10,7 @@ export type IconKey =
   | "movement"
   | "symptoms"
   | "progress"
+  | "quiz"
   | "saved"
   | "bag"
   | "labor"
@@ -39,6 +40,7 @@ export function navForStage(stage: FamilyStage): NavItem[] {
       home,
       { href: "/journey", label: "Journey", icon: "journey" },
       { href: "/learn", label: "Learn", icon: "learn" },
+      { href: "/quiz", label: "All quizzes", icon: "quiz" },
       { href: "/ask", label: "Ask NestWise", icon: "ask" },
       { href: "/nutrition", label: "Nutrition", icon: "nutrition" },
       { href: "/exercise", label: "Movement", icon: "movement" },
@@ -54,6 +56,7 @@ export function navForStage(stage: FamilyStage): NavItem[] {
       { href: "/birth", label: "Birth prep", icon: "journey" },
       { href: "/birth/hospital-bag", label: "Hospital bag", icon: "bag" },
       { href: "/birth/learn", label: "Labor", icon: "labor" },
+      { href: "/quiz", label: "All quizzes", icon: "quiz" },
       { href: "/ask", label: "Ask NestWise", icon: "ask" },
       { href: "/journey", label: "Weeks", icon: "journey" },
       { href: "/progress", label: "Progress", icon: "progress" },
@@ -67,8 +70,9 @@ export function navForStage(stage: FamilyStage): NavItem[] {
       { href: "/postpartum/first-days", label: "First days", icon: "firstDays" },
       { href: "/postpartum/body", label: "Recovery", icon: "recovery" },
       { href: "/postpartum/wellbeing", label: "Wellbeing", icon: "wellbeing" },
-      { href: "/ask", label: "Ask NestWise", icon: "ask" },
       { href: "/learn", label: "Learn", icon: "learn" },
+      { href: "/quiz", label: "All quizzes", icon: "quiz" },
+      { href: "/ask", label: "Ask NestWise", icon: "ask" },
       { href: "/progress", label: "Progress", icon: "progress" },
       { href: "/bookmarks", label: "Saved", icon: "saved" },
     ];
@@ -82,6 +86,7 @@ export function navForStage(stage: FamilyStage): NavItem[] {
     { href: "/child/games", label: "Games", icon: "games" },
     { href: "/child/family-games", label: "Family games", icon: "family" },
     { href: "/learn", label: "Parent learning", icon: "learn" },
+    { href: "/quiz", label: "All quizzes", icon: "quiz" },
     { href: "/ask", label: "Ask NestWise", icon: "ask" },
     { href: "/child/progress", label: "Progress", icon: "progress" },
     { href: "/bookmarks", label: "Saved", icon: "saved" },

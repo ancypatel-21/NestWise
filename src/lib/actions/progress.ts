@@ -39,7 +39,6 @@ const quizSchema = z.object({
   score: z.number().int().min(0),
   total: z.number().int().min(1),
   missed: z.array(z.string().max(400)).max(40).default([]),
-  confidentMisses: z.array(z.string().max(400)).max(40).default([]),
   childId: z.string().optional(),
 });
 
@@ -57,18 +56,11 @@ export async function recordQuizAttempt(input: z.infer<typeof quizSchema>): Prom
     },
   });
   // Adult quizzes feed the spaced-repetition review queue.
-  if (!data.childId && (data.missed.length > 0 || data.confidentMisses.length > 0)) {
+  if (!data.childId && data.missed.length > 0) {
     const { queueForReview } = await import("./review");
     await queueForReview(data.missed, user.id);
-    // "Confidently wrong" — a real misconception. Flag it so review surfaces it first.
-    if (data.confidentMisses.length > 0) {
-      await queueForReview(data.confidentMisses, user.id, { confident: true });
-    }
   }
-  track("quiz_completed", {
-    scorePct: Math.round((data.score / data.total) * 100),
-    confidentMisses: data.confidentMisses.length,
-  });
+  track("quiz_completed", { scorePct: Math.round((data.score / data.total) * 100) });
 }
 
 const gameSchema = z.object({

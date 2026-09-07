@@ -4,6 +4,7 @@ import type { FamilyContext } from "@/types";
 import { mobileNavForStage, navForStage } from "./nav-config";
 import { MobileTabBar, SidebarNav } from "./NavLinks";
 import { StagePill } from "./StagePill";
+import { AskFab } from "./AskFab";
 
 const PART_LABEL: Record<number, string> = {
   1: "Pregnancy",
@@ -87,6 +88,7 @@ export function AppShell({
       </div>
 
       <MobileTabBar items={mobileItems} />
+      <AskFab />
     </div>
   );
 }
