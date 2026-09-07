@@ -1,25 +1,26 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
 /**
  * The language-model layer for Ask NestWise.
  *
  * NestWise is retrieval-first: every answer is grounded in curated, reviewed content. When an
- * Anthropic API key (or `ant auth login` profile) is available, `generate()` uses Claude to phrase
- * that grounded answer naturally and warmly. When it isn't, callers fall back to a deterministic
- * template so the product still works with zero configuration.
+ * OpenAI API key is available, `generate()` uses a model to phrase that grounded answer naturally
+ * and warmly. When it isn't, callers fall back to a deterministic template so the product still
+ * works with zero configuration.
  *
  * The model is instructed to answer ONLY from the supplied context and to defer to a professional
  * when the context doesn't cover the question — it never free-styles medical claims.
  */
 
-const MODEL = "claude-opus-5";
+// Override with OPENAI_MODEL in .env (e.g. "gpt-4o", "gpt-5") without touching code.
+const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
-let client: Anthropic | null = null;
-function getClient(): Anthropic | null {
+let client: OpenAI | null = null;
+function getClient(): OpenAI | null {
   if (client) return client;
   try {
-    // Resolves ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN, or an `ant auth login` profile.
-    client = new Anthropic();
+    // Reads OPENAI_API_KEY from the environment.
+    client = new OpenAI();
     return client;
   } catch {
     return null;
@@ -27,11 +28,7 @@ function getClient(): Anthropic | null {
 }
 
 export function isLlmEnabled(): boolean {
-  return Boolean(
-    process.env.ANTHROPIC_API_KEY ||
-      process.env.ANTHROPIC_AUTH_TOKEN ||
-      process.env.NESTWISE_LLM === "1",
-  );
+  return Boolean(process.env.OPENAI_API_KEY || process.env.NESTWISE_LLM === "1");
 }
 
 export type DetailLevel = "simple" | "standard" | "deep";
@@ -64,6 +61,11 @@ const REPHRASE_INSTRUCTION: Record<RephraseStyle, string> = {
     "Re-explain the passage so it speaks directly to this reader's situation (given below). Highlight the parts that matter most for them. Keep every fact; add no new claims.",
 };
 
+/** Pull the assistant's text out of a Chat Completions response. */
+function textFrom(res: OpenAI.Chat.Completions.ChatCompletion): string | null {
+  return res.choices[0]?.message?.content?.trim() || null;
+}
+
 /**
  * Rephrase a passage of curated lesson text in a different way. Returns null when no model is
  * configured (the caller then uses a lighter deterministic transform).
@@ -77,12 +79,15 @@ export async function rephrase(
   const c = getClient();
   if (!c) return null;
   try {
-    const res = await c.messages.create({
+    const res = await c.chat.completions.create({
       model: MODEL,
       max_tokens: 600,
-      system:
-        "You are a patient tutor for expecting and new parents. You rephrase existing, reviewed lesson text — you never introduce new facts, medication advice, or claims about an individual's health. Keep it warm and plain. 2–4 sentences or a few short bullets.",
       messages: [
+        {
+          role: "system",
+          content:
+            "You are a patient tutor for expecting and new parents. You rephrase existing, reviewed lesson text — you never introduce new facts, medication advice, or claims about an individual's health. Keep it warm and plain. 2–4 sentences or a few short bullets.",
+        },
         {
           role: "user",
           content:
@@ -92,13 +97,7 @@ export async function rephrase(
         },
       ],
     });
-    return (
-      res.content
-        .filter((b): b is Anthropic.TextBlock => b.type === "text")
-        .map((b) => b.text)
-        .join("\n")
-        .trim() || null
-    );
+    return textFrom(res);
   } catch {
     return null;
   }
@@ -123,11 +122,11 @@ export async function generate(input: GenerateInput): Promise<string | null> {
   ].join(" ");
 
   try {
-    const res = await c.messages.create({
+    const res = await c.chat.completions.create({
       model: MODEL,
       max_tokens: 1200,
-      system,
       messages: [
+        { role: "system", content: system },
         {
           role: "user",
           content:
@@ -138,12 +137,7 @@ export async function generate(input: GenerateInput): Promise<string | null> {
         },
       ],
     });
-    const text = res.content
-      .filter((b): b is Anthropic.TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("\n")
-      .trim();
-    return text || null;
+    return textFrom(res);
   } catch {
     return null;
   }
