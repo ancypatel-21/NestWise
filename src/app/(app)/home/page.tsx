@@ -6,10 +6,12 @@ import {
   MessageCircleHeart,
   Sparkles,
 } from "lucide-react";
-import { requireFamilyContext } from "@/lib/auth/session";
+import { GraduationCap } from "lucide-react";
+import { getSessionUser, requireFamilyContext } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { dailyIndex } from "@/lib/utils";
 import { weeksToMonths } from "@/lib/personalization/pregnancy";
+import { recommendNext } from "@/lib/personalization/recommend";
 import { Card, CardTitle, LinkCard } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { Callout } from "@/components/ui/Callout";
@@ -33,6 +35,9 @@ export default async function HomePage() {
   const facts = factPool.length ? factPool : allFacts;
   const todaysFact = facts[dailyIndex(facts.length)];
 
+  const user = await getSessionUser();
+  const rec = user ? await recommendNext(ctx, user.id) : null;
+
   return (
     <div className="space-y-6">
       <div>
@@ -43,6 +48,27 @@ export default async function HomePage() {
           Where are we right now, what's happening, and what could we learn or do today?
         </p>
       </div>
+
+      {rec && (
+        <Card className="nw-tilt-a bg-[var(--color-accent-surface)]">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center border-2 border-[var(--color-graphite)] bg-[var(--color-surface)] [border-radius:14px_9px_13px_10px/10px_13px_9px_14px]">
+              <GraduationCap size={18} className="text-[var(--color-accent-strong)]" aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-accent-strong)]">
+                Recommended for you
+              </p>
+              <CardTitle className="mt-0.5">{rec.title}</CardTitle>
+              <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{rec.reason}</p>
+              <ButtonLink href={rec.href} size="sm" className="mt-3">
+                {rec.kind === "quiz" ? "Take the quiz" : rec.kind === "activity" ? "Try this" : "Start"}
+                {rec.minutes ? ` · ${rec.minutes} min` : ""}
+              </ButtonLink>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {stage.mode === "pregnancy" && <PregnancyDashboard ctx={ctx} />}
       {stage.mode === "birth-countdown" && <BirthCountdownDashboard ctx={ctx} />}
