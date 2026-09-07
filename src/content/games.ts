@@ -108,7 +108,8 @@ export const GAME_SEEDS: GameSeed[] = [
     item("🌸", "🌸", "flower"), item("🚗", "🚗", "car"), item("🐟", "🐟", "fish"),
   ]),
   game("What comes next?", "Patterns", "PATTERN", 2.5, ["Pattern spotting", "Predicting", "Reasoning"], [
-    item("red", "🔴"), item("blue", "🔵"), item("red", "🔴"), item("blue", "🔵"),
+    item("red", "🔴"), item("blue", "🔵"), item("green", "🟢"),
+    item("yellow", "🟡"), item("purple", "🟣"), item("orange", "🟠"),
   ]),
   game("Big or small?", "Sorting", "ODD_ONE_OUT", 2, ["Comparing", "Size words", "Reasoning"], [
     item("elephant", "🐘", "big"), item("whale", "🐳", "big"), item("bus", "🚌", "big"), item("house", "🏠", "big"),

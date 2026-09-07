@@ -118,6 +118,27 @@ describe("game engine (PRD §32, §33)", () => {
     }
   });
 
+  it("never shows the same option label twice, even from a pool with repeats", () => {
+    const dupPool = {
+      items: [
+        { label: "red", emoji: "🔴" },
+        { label: "blue", emoji: "🔵" },
+        { label: "red", emoji: "🔴" },
+        { label: "blue", emoji: "🔵" },
+      ],
+    };
+    for (const fmt of ["CHOOSE", "PATTERN", "MATCH", "MEMORY", "MCQ"] as const) {
+      for (let i = 0; i < 40; i++) {
+        for (const r of buildGame(fmt, dupPool, 5).rounds) {
+          const labels = r.options.map((o) => o.label);
+          expect(new Set(labels).size).toBe(labels.length);
+          expect(r.correct[0]).toBeGreaterThanOrEqual(0);
+          expect(r.correct[0]).toBeLessThan(r.options.length);
+        }
+      }
+    }
+  });
+
   it("advances level on a strong score, drops on a weak one", () => {
     expect(nextLevel(2, 9, 10)).toBe(3);
     expect(nextLevel(2, 2, 10)).toBe(1);

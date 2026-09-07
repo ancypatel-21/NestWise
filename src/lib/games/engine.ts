@@ -43,6 +43,32 @@ function sample<T>(arr: T[], n: number): T[] {
   return copy.slice(0, Math.min(n, copy.length));
 }
 
+/** Collapse pool entries that share a label so options can never show a duplicate. */
+function uniqueByLabel<T extends { label: string }>(arr: T[]): T[] {
+  const seen = new Set<string>();
+  return arr.filter((i) => (seen.has(i.label) ? false : (seen.add(i.label), true)));
+}
+
+/**
+ * Shuffled option list: the correct item plus distinct-label distractors from `pool`.
+ * Never repeats a label and never lists the answer twice.
+ */
+function buildOptions(
+  answer: { label: string; emoji?: string },
+  pool: Array<{ label: string; emoji?: string }>,
+  count: number,
+): { options: GameOption[]; correct: number[] } {
+  const distractors = sample(
+    uniqueByLabel(pool).filter((i) => i.label !== answer.label),
+    Math.max(0, count - 1),
+  );
+  const opts = [answer, ...distractors].sort(() => Math.random() - 0.5);
+  return {
+    options: opts.map((o) => ({ label: o.label, emoji: o.emoji })),
+    correct: [opts.findIndex((o) => o.label === answer.label)],
+  };
+}
+
 /** Rounds and option count grow with level. */
 export function roundsForLevel(level: number): number {
   return Math.min(10, 4 + Math.floor(level / 2));
@@ -91,25 +117,36 @@ function buildRound(
     }
 
     case "PATTERN": {
-      const seq = sample(items, 3);
-      const next = seq[seq.length % seq.length];
-      const distractors = sample(
-        items.filter((i) => i.label !== next.label),
-        optionCount - 1,
-      );
-      const opts = [next, ...distractors].sort(() => Math.random() - 0.5);
+      // Build a genuine repeating unit (A B A B … or A B C A B C …), show two full
+      // repeats plus an optional partial one, then ask for the element that continues it.
+      const pool = uniqueByLabel(items);
+      const unitLen = optionCount >= 4 && pool.length >= 3 ? 3 : 2;
+      const unit = sample(pool, Math.min(unitLen, pool.length));
+      const showLen = unit.length * 2 + Math.floor(Math.random() * unit.length);
+      const shown = Array.from({ length: showLen }, (_, i) => unit[i % unit.length]);
+      const next = unit[showLen % unit.length];
+      const { options, correct } = buildOptions(next, pool, optionCount);
       return {
-        prompt: `What comes next? ${seq.map((s) => s.emoji ?? s.label).join(" ")} …`,
-        options: opts.map((o) => ({ label: o.label, emoji: o.emoji })),
-        correct: [opts.findIndex((o) => o.label === next.label)],
+        prompt: `What comes next? ${shown.map((s) => s.emoji ?? s.label).join(" ")} …`,
+        options,
+        correct,
       };
     }
 
     case "ODD_ONE_OUT": {
       const groups = [...new Set(items.map((i) => i.group).filter(Boolean))] as string[];
       const mainGroup = groups[Math.floor(Math.random() * groups.length)] ?? undefined;
-      const same = sample(items.filter((i) => i.group === mainGroup), optionCount - 1);
-      const odd = sample(items.filter((i) => i.group && i.group !== mainGroup), 1)[0] ?? items[0];
+      const same = sample(
+        uniqueByLabel(items.filter((i) => i.group === mainGroup)),
+        optionCount - 1,
+      );
+      const odd =
+        sample(
+          uniqueByLabel(items.filter((i) => i.group && i.group !== mainGroup)).filter(
+            (i) => !same.some((s) => s.label === i.label),
+          ),
+          1,
+        )[0] ?? items[0];
       const opts = [...same, odd].sort(() => Math.random() - 0.5);
       return {
         prompt: "Which one does not belong?",
@@ -120,45 +157,33 @@ function buildRound(
 
     case "MATCH":
     case "MEMORY": {
-      const [target] = sample(items, 1);
-      const distractors = sample(
-        items.filter((i) => i.label !== target.label),
-        optionCount - 1,
-      );
-      const opts = [target, ...distractors].sort(() => Math.random() - 0.5);
+      const [target] = sample(uniqueByLabel(items), 1);
+      const { options, correct } = buildOptions(target, items, optionCount);
       return {
         prompt: `Find the match for: ${target.group ?? target.label}`,
-        options: opts.map((o) => ({ label: o.label, emoji: o.emoji })),
-        correct: [opts.findIndex((o) => o.label === target.label)],
+        options,
+        correct,
       };
     }
 
     case "MCQ": {
-      const [target] = sample(items, 1);
-      const distractors = sample(
-        items.filter((i) => i.label !== target.label),
-        optionCount - 1,
-      );
-      const opts = [target, ...distractors].sort(() => Math.random() - 0.5);
+      const [target] = sample(uniqueByLabel(items), 1);
+      const { options, correct } = buildOptions(target, items, optionCount);
       return {
         prompt: target.group ?? `Which is "${target.label}"?`,
-        options: opts.map((o) => ({ label: o.label, emoji: o.emoji })),
-        correct: [opts.findIndex((o) => o.label === target.label)],
+        options,
+        correct,
       };
     }
 
     case "CHOOSE":
     default: {
-      const [target] = sample(items, 1);
-      const distractors = sample(
-        items.filter((i) => i.label !== target.label),
-        optionCount - 1,
-      );
-      const opts = [target, ...distractors].sort(() => Math.random() - 0.5);
+      const [target] = sample(uniqueByLabel(items), 1);
+      const { options, correct } = buildOptions(target, items, optionCount);
       return {
         prompt: `Tap the ${target.label}`,
-        options: opts.map((o) => ({ label: o.label, emoji: o.emoji })),
-        correct: [opts.findIndex((o) => o.label === target.label)],
+        options,
+        correct,
       };
     }
   }

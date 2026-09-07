@@ -41,7 +41,7 @@ export default async function GamePage({
   const startLevel = lastProgress?.level ?? 1;
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-3xl">
       <PageHeader
         title={game.title}
         backHref={kids ? "/child/games" : "/child/games"}

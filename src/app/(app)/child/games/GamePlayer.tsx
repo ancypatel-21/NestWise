@@ -132,8 +132,8 @@ export function GamePlayer({
         className="mb-4"
       />
       <Card>
-        <p className="text-center text-xl font-bold">{current.prompt}</p>
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <p className="text-center text-2xl font-bold sm:text-3xl">{current.prompt}</p>
+        <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3">
           {current.options.map((opt, i) => {
             const isCorrect = current.correct.includes(i);
             const isPicked = picked === i;
@@ -143,7 +143,7 @@ export function GamePlayer({
                 onClick={() => pick(i)}
                 disabled={picked !== null}
                 className={cn(
-                  "flex min-h-20 flex-col items-center justify-center gap-1 rounded-[var(--radius-lg)] border p-3 text-center text-sm font-bold transition-colors",
+                  "flex min-h-32 flex-col items-center justify-center gap-2 rounded-[var(--radius-lg)] border-2 p-5 text-center text-base font-bold transition-colors sm:min-h-40 sm:text-lg",
                   picked === null &&
                     "border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-muted)]",
                   picked !== null && isCorrect && "border-[var(--color-success)] bg-[var(--color-success-surface)] text-[var(--color-success)]",
@@ -151,10 +151,10 @@ export function GamePlayer({
                   picked !== null && !isCorrect && !isPicked && "opacity-50",
                 )}
               >
-                {opt.emoji && <span className="text-2xl" aria-hidden>{opt.emoji}</span>}
+                {opt.emoji && <span className="text-5xl sm:text-6xl" aria-hidden>{opt.emoji}</span>}
                 <span>{opt.label}</span>
-                {picked !== null && isCorrect && <Check size={16} aria-hidden />}
-                {picked !== null && isPicked && !isCorrect && <X size={16} aria-hidden />}
+                {picked !== null && isCorrect && <Check size={20} aria-hidden />}
+                {picked !== null && isPicked && !isCorrect && <X size={20} aria-hidden />}
               </button>
             );
           })}
