@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { Send, Sparkles, BookOpen, Baby, GraduationCap } from "lucide-react";
+import { Send, BookOpen, Baby, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EmergencyBanner } from "@/components/safety";
 import { cn } from "@/lib/utils";
@@ -150,6 +150,8 @@ export function AskChat({ module }: { module?: string }) {
     }
   }
 
+  const hasThread = turns.length > 0 || socratic !== null || loading;
+
   return (
     <div className="flex flex-col gap-4">
       <EmergencyBanner />
@@ -174,28 +176,8 @@ export function AskChat({ module }: { module?: string }) {
         ))}
       </div>
 
+      {hasThread && (
       <div ref={listRef} className="nw-paper max-h-[52vh] space-y-4 overflow-y-auto p-4">
-        {turns.length === 0 && (
-          <div className="py-6 text-center">
-            <Sparkles className="mx-auto text-[var(--color-accent-strong)]" aria-hidden />
-            <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-ink-soft)]">
-              Ask anything about your stage — or hit <strong>Test me</strong> and NestWise will
-              quiz <em>you</em> first, then give feedback on what you wrote.
-            </p>
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {SAMPLES.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => ask(s)}
-                  className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-soft)] [border-radius:12px_9px_11px_10px/10px_11px_9px_12px] hover:border-[var(--color-graphite)]"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {turns.map((turn, i) => (
           <div key={i} className={cn("flex", turn.role === "user" ? "justify-end" : "justify-start")}>
             <div
@@ -270,6 +252,7 @@ export function AskChat({ module }: { module?: string }) {
           <p className="text-sm text-[var(--color-ink-faint)]">NestWise is thinking…</p>
         )}
       </div>
+      )}
 
       <form
         onSubmit={(e) => {
@@ -283,7 +266,8 @@ export function AskChat({ module }: { module?: string }) {
           onChange={(e) => setValue(e.target.value)}
           placeholder="Ask about this stage, or type a topic and hit Test me…"
           aria-label="Your question or topic"
-          className="min-h-11 flex-1 border-2 border-[var(--color-graphite)] bg-[var(--color-surface)] px-4 text-sm [border-radius:14px_9px_13px_10px/10px_13px_9px_14px]"
+          autoFocus
+          className="min-h-12 flex-1 border-2 border-[var(--color-graphite)] bg-[var(--color-surface)] px-4 text-base [border-radius:14px_9px_13px_10px/10px_13px_9px_14px]"
         />
         <Button type="button" variant="secondary" onClick={testMe} disabled={loading}>
           <GraduationCap size={15} aria-hidden />
@@ -294,6 +278,26 @@ export function AskChat({ module }: { module?: string }) {
           <span className="sr-only">Send</span>
         </Button>
       </form>
+
+      {!hasThread && (
+        <div className="text-center">
+          <p className="mx-auto max-w-md text-sm text-[var(--color-ink-soft)]">
+            Ask anything about your stage — or hit <strong>Test me</strong> and NestWise will
+            quiz <em>you</em> first, then give feedback on what you wrote.
+          </p>
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            {SAMPLES.map((s) => (
+              <button
+                key={s}
+                onClick={() => ask(s)}
+                className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-soft)] [border-radius:12px_9px_11px_10px/10px_11px_9px_12px] hover:border-[var(--color-graphite)]"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <p className="flex items-center gap-1.5 text-xs text-[var(--color-ink-faint)]">
         <Baby size={13} aria-hidden />
