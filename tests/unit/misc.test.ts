@@ -97,18 +97,22 @@ describe("manual journey switch (PRD §3, §6)", () => {
     createdAt: new Date("2024-06-01"),
   } as never;
 
-  it("only offers journeys the family has data for", () => {
-    expect(availableModes(null, []).length).toBe(0);
-    expect(availableModes(profile, []).map((m) => m.value)).toEqual([
-      "pregnancy",
-      "birth-countdown",
-    ]);
-    expect(availableModes(profile, [toddler]).map((m) => m.value)).toEqual([
+  it("always offers all four journeys, flagging which have data", () => {
+    expect(availableModes(null, []).map((m) => m.value)).toEqual([
       "pregnancy",
       "birth-countdown",
       "postpartum",
       "child",
     ]);
+    // pregnancy profile but no child
+    expect(availableModes(profile, []).map((m) => [m.value, m.hasData])).toEqual([
+      ["pregnancy", true],
+      ["birth-countdown", true],
+      ["postpartum", false],
+      ["child", false],
+    ]);
+    // both on file
+    expect(availableModes(profile, [toddler]).every((m) => m.hasData)).toBe(true);
   });
 
   it("re-derives an accurate stage for the chosen journey", () => {
@@ -125,9 +129,11 @@ describe("manual journey switch (PRD §3, §6)", () => {
     expect(toChild.primaryChildName).toBe("Bo");
   });
 
-  it("ignores an override the family has no data for", () => {
+  it("still opens a journey with no data on file, just without specifics", () => {
     const natural = getFamilyStage(profile, [], today);
-    expect(applyModeOverride(natural, "child", profile, [], today)).toEqual(natural);
+    const toChild = applyModeOverride(natural, "child", profile, [], today);
+    expect(toChild).toEqual({ part: 3, mode: "child" });
+    expect(toChild.primaryChildId).toBeUndefined();
   });
 });
 

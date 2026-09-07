@@ -23,7 +23,7 @@ export function ModeSwitcher({
   overrideActive,
 }: {
   current: StageMode;
-  options: Array<{ value: OverridableMode; label: string }>;
+  options: Array<{ value: OverridableMode; label: string; hasData: boolean }>;
   overrideActive: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -47,7 +47,7 @@ export function ModeSwitcher({
     };
   }, [open]);
 
-  if (options.length < 2) return null;
+  if (options.length === 0) return null;
 
   function choose(mode: string | null) {
     setOpen(false);
@@ -90,7 +90,14 @@ export function ModeSwitcher({
               onClick={() => choose(o.value)}
               className="flex w-full items-center justify-between gap-2 rounded-[var(--radius-md)] px-3 py-2 text-left text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-surface-muted)]"
             >
-              {o.label}
+              <span className="flex items-center gap-1.5">
+                {o.label}
+                {!o.hasData && (
+                  <span className="text-xs font-medium text-[var(--color-ink-faint)]">
+                    · set up
+                  </span>
+                )}
+              </span>
               {current === o.value && <Check size={15} aria-hidden />}
             </button>
           ))}

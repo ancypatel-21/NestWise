@@ -27,24 +27,44 @@ const LABELS: Record<OverridableMode, string> = {
   child: "Child & family",
 };
 
+/** All four journeys, in the order a family moves through them. */
+export const ALL_MODES: OverridableMode[] = [
+  "pregnancy",
+  "birth-countdown",
+  "postpartum",
+  "child",
+];
+
 export function isOverridableMode(v: string | undefined | null): v is OverridableMode {
   return (
     v === "pregnancy" || v === "birth-countdown" || v === "postpartum" || v === "child"
   );
 }
 
-/** Journeys the family can switch into, given the data on file. */
+/**
+ * Journeys the family can switch into. All four are always offered so a user can look
+ * ahead (or back) at any point; a journey with no data on file still opens, just without
+ * week/age specifics. `hasData` flags which ones are populated for the current family.
+ */
 export function availableModes(
   pregnancyProfile: PregnancyProfile | null,
   children: Child[],
-): Array<{ value: OverridableMode; label: string }> {
-  const modes: OverridableMode[] = [];
-  if (pregnancyProfile) modes.push("pregnancy", "birth-countdown");
-  if (children.length) modes.push("postpartum", "child");
-  return modes.map((value) => ({ value, label: LABELS[value] }));
+): Array<{ value: OverridableMode; label: string; hasData: boolean }> {
+  return ALL_MODES.map((value) => ({
+    value,
+    label: LABELS[value],
+    hasData:
+      value === "pregnancy" || value === "birth-countdown"
+        ? pregnancyProfile != null
+        : children.length > 0,
+  }));
 }
 
-/** Re-derive the stage for a manually chosen journey, keeping week/age details accurate. */
+/**
+ * Re-derive the stage for a manually chosen journey. Week/age details are filled in when the
+ * family has the relevant profile; otherwise the journey still opens with just its mode set
+ * (pages already handle "no pregnancy profile" / "no child yet" with a set-up prompt).
+ */
 export function applyModeOverride(
   natural: FamilyStage,
   override: OverridableMode,
@@ -53,11 +73,12 @@ export function applyModeOverride(
   today: Date = new Date(),
 ): FamilyStage {
   if (override === "pregnancy" || override === "birth-countdown") {
-    if (!pregnancyProfile) return natural;
+    const part = override === "birth-countdown" ? 2 : 1;
+    if (!pregnancyProfile) return { part, mode: override };
     const week = pregnancyWeekFromDueDate(pregnancyProfile.estimatedDueDate, today);
     const days = daysUntilDueDate(pregnancyProfile.estimatedDueDate, today);
     return {
-      part: override === "birth-countdown" ? 2 : 1,
+      part,
       mode: override,
       pregnancyWeek: week,
       approxMonths: approxMonths(week),
@@ -67,13 +88,14 @@ export function applyModeOverride(
     };
   }
 
+  const part = override === "postpartum" ? 2 : 3;
   const youngest = [...children].sort(
     (a, b) => b.dateOfBirth.getTime() - a.dateOfBirth.getTime(),
   )[0];
-  if (!youngest) return natural;
+  if (!youngest) return { part, mode: override };
   const age = ageFromDob(youngest.dateOfBirth, today);
   return {
-    part: override === "postpartum" ? 2 : 3,
+    part,
     mode: override,
     primaryChildId: youngest.id,
     primaryChildName: youngest.nameOrNickname,
