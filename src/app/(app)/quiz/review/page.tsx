@@ -18,9 +18,15 @@ export default async function ReviewPage() {
 
   const due = await db.reviewItem.findMany({
     where: { userId: user.id, dueAt: { lte: new Date() } },
-    orderBy: { dueAt: "asc" },
     take: 20,
   });
+  // Confidently-wrong misconceptions first, then oldest-due.
+  due.sort((a, b) => {
+    const ac = a.lastResult === "confident-wrong" ? 0 : 1;
+    const bc = b.lastResult === "confident-wrong" ? 0 : 1;
+    return ac - bc || a.dueAt.getTime() - b.dueAt.getTime();
+  });
+  const confidentCount = due.filter((d) => d.lastResult === "confident-wrong").length;
 
   const cards: ReviewCard[] = [];
   for (const item of due) {
@@ -61,6 +67,12 @@ export default async function ReviewPage() {
             {cards.length} due. Get one right and it moves to a longer interval; miss it and it
             comes back sooner.
           </Callout>
+          {confidentCount > 0 && (
+            <Callout tone="caution" className="mb-4" compact>
+              {confidentCount} of these you were <strong>sure about but got wrong</strong> — they're
+              first in the deck.
+            </Callout>
+          )}
           <ReviewDeck cards={cards} />
         </>
       )}
