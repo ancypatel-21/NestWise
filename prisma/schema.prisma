@@ -108,6 +108,24 @@ model User {
   quizAttempts     QuizAttempt[]
   lessonCompletion LessonCompletion[]
   askLogs          AskLog[]
+  reviewItems      ReviewItem[]
+}
+
+// Spaced-repetition review. One row per question a learner has got wrong; a simple Leitner
+// box (1–5) with widening intervals moves it toward "learned".
+model ReviewItem {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  prompt     String
+  box        Int      @default(1)
+  dueAt      DateTime @default(now())
+  lastResult String?
+  createdAt  DateTime @default(now())
+  reviewedAt DateTime @default(now())
+
+  @@unique([userId, prompt])
+  @@index([userId, dueAt])
 }
 
 model Family {

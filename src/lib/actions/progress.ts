@@ -55,6 +55,11 @@ export async function recordQuizAttempt(input: z.infer<typeof quizSchema>): Prom
       childId: data.childId ?? null,
     },
   });
+  // Adult quizzes feed the spaced-repetition review queue.
+  if (!data.childId && data.missed.length > 0) {
+    const { queueForReview } = await import("./review");
+    await queueForReview(data.missed, user.id);
+  }
   track("quiz_completed", { scorePct: Math.round((data.score / data.total) * 100) });
 }
 

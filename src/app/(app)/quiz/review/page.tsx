@@ -1,60 +1,56 @@
 import type { Metadata } from "next";
 import { getSessionUser, requireFamilyContext } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { questionsFromPrompts } from "@/lib/quiz-index";
+import { QUESTION_BY_PROMPT } from "@/lib/quiz-index";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Callout } from "@/components/ui/Callout";
-import { QuizPlayer } from "../QuizPlayer";
+import { ReviewDeck, type ReviewCard } from "./ReviewDeck";
 
-export const metadata: Metadata = { title: "Review what you missed" };
+export const metadata: Metadata = { title: "Daily review" };
 
-export default async function QuizReviewPage() {
+export default async function ReviewPage() {
   await requireFamilyContext();
   const user = await getSessionUser();
   if (!user) return null;
 
-  const attempts = await db.quizAttempt.findMany({
-    where: { userId: user.id },
-    orderBy: { completedAt: "desc" },
-    take: 40,
+  const due = await db.reviewItem.findMany({
+    where: { userId: user.id, dueAt: { lte: new Date() } },
+    orderBy: { dueAt: "asc" },
+    take: 15,
   });
 
-  // Count how often each prompt has been missed; bring back the ones missed most.
-  const missCount = new Map<string, number>();
-  for (const a of attempts) for (const p of a.missed) missCount.set(p, (missCount.get(p) ?? 0) + 1);
+  const cards: ReviewCard[] = due
+    .map((item) => {
+      const question = QUESTION_BY_PROMPT.get(item.prompt);
+      return question ? { prompt: item.prompt, question } : null;
+    })
+    .filter((c): c is ReviewCard => c !== null);
 
-  const prompts = [...missCount.entries()]
-    .sort((x, y) => y[1] - x[1])
-    .map(([p]) => p)
-    .slice(0, 12);
-  const questions = questionsFromPrompts(prompts);
+  const totalTracked = await db.reviewItem.count({ where: { userId: user.id } });
 
   return (
     <div className="mx-auto max-w-2xl">
       <PageHeader
-        title="Review what you missed"
-        intro="NestWise brings back the questions you've got wrong, so the tricky bits actually stick."
+        title="Daily review"
+        intro="A few questions you've got wrong before, brought back at spaced intervals so they actually stick."
         backHref="/quiz"
-        backLabel="All quizzes"
+        backLabel="Quizzes"
       />
 
-      {questions.length === 0 ? (
-        <EmptyState title="Nothing to review — nice work">
-          Missed questions from any quiz will show up here for a second go.
+      {cards.length === 0 ? (
+        <EmptyState title="Nothing due — you're on top of it">
+          {totalTracked > 0
+            ? `NestWise is tracking ${totalTracked} question${totalTracked === 1 ? "" : "s"}. They'll come back for review over the next few days.`
+            : "Miss a question in any quiz and it'll show up here for spaced review."}
         </EmptyState>
       ) : (
         <>
           <Callout tone="tip" className="mb-4">
-            {questions.length} question{questions.length === 1 ? "" : "s"} you've missed before,
-            most-missed first. Re-take the full quizzes to update your progress.
+            {cards.length} card{cards.length === 1 ? "" : "s"} due. Get one right and it moves to a
+            longer interval; miss it and it comes back sooner.
           </Callout>
-          <QuizPlayer
-            quizSlug="review-missed"
-            title="Your review set"
-            questions={questions}
-            recordAttempts={false}
-          />
+          <ReviewDeck cards={cards} />
         </>
       )}
     </div>

@@ -6,7 +6,7 @@ import {
   MessageCircleHeart,
   Sparkles,
 } from "lucide-react";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, RefreshCw } from "lucide-react";
 import { getSessionUser, requireFamilyContext } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { dailyIndex } from "@/lib/utils";
@@ -37,6 +37,9 @@ export default async function HomePage() {
 
   const user = await getSessionUser();
   const rec = user ? await recommendNext(ctx, user.id) : null;
+  const dueReview = user
+    ? await db.reviewItem.count({ where: { userId: user.id, dueAt: { lte: new Date() } } })
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -68,6 +71,26 @@ export default async function HomePage() {
             </div>
           </div>
         </Card>
+      )}
+
+      {dueReview > 0 && (
+        <Link
+          href="/quiz/review"
+          className="flex items-center gap-3 nw-paper bg-[var(--color-surface)] p-4 transition-transform hover:-translate-y-0.5"
+        >
+          <span className="grid h-10 w-10 shrink-0 place-items-center border-2 border-[var(--color-graphite)] bg-[var(--color-accent-surface)] [border-radius:14px_9px_13px_10px/10px_13px_9px_14px]">
+            <RefreshCw size={18} className="text-[var(--color-accent-strong)]" aria-hidden />
+          </span>
+          <span className="flex-1">
+            <span className="block font-display text-base font-bold text-[var(--color-ink)]">
+              {dueReview} to review today
+            </span>
+            <span className="block text-sm text-[var(--color-ink-soft)]">
+              Quick spaced-repetition of questions you've missed — a couple of minutes.
+            </span>
+          </span>
+          <span className="text-sm font-semibold text-[var(--color-accent-strong)]">Review →</span>
+        </Link>
       )}
 
       {stage.mode === "pregnancy" && <PregnancyDashboard ctx={ctx} />}
