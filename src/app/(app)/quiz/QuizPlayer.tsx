@@ -15,12 +15,15 @@ export function QuizPlayer({
   questions,
   childId,
   recordAttempts = true,
+  queueMissed,
 }: {
   quizSlug: string;
   title: string;
   questions: QuizQuestion[];
   childId?: string;
   recordAttempts?: boolean;
+  /** For custom/adaptive quizzes: send missed prompts to the review queue without a QuizAttempt row. */
+  queueMissed?: (missed: string[]) => Promise<void>;
 }) {
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
@@ -53,6 +56,11 @@ export function QuizPlayer({
             missed: missed.current,
             childId,
           });
+        });
+      } else if (queueMissed && missed.current.length) {
+        const m = missed.current;
+        startTransition(() => {
+          void queueMissed(m);
         });
       }
       return;

@@ -19,6 +19,12 @@ export async function queueForReview(prompts: string[], userId: string): Promise
   }
 }
 
+/** Queue missed prompts from a custom/adaptive quiz (no QuizAttempt row is written). */
+export async function queueMissedForReview(prompts: string[]): Promise<void> {
+  const user = await requireUser();
+  await queueForReview(prompts.slice(0, 40), user.id);
+}
+
 const gradeSchema = z.object({ prompt: z.string().min(1), correct: z.boolean() });
 
 /** Grade one review card and reschedule it. */

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Wand2 } from "lucide-react";
 import { getSessionUser, requireFamilyContext } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -46,6 +46,20 @@ export default async function QuizListPage() {
         title="Quizzes"
         intro="6–7 questions per topic, with an explanation after every answer. Retry as often as you like — nothing here is graded and symptoms are never gamified."
       />
+
+      <div className="mb-6 nw-paper bg-[var(--color-surface)] p-5">
+        <p className="flex items-center gap-2 font-display text-lg font-bold">
+          <Wand2 size={18} aria-hidden />
+          Quiz me
+        </p>
+        <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+          Build a quiz on the topics you choose — optionally weighted toward what you've found
+          tricky.
+        </p>
+        <ButtonLink href="/quiz/build" size="sm" className="mt-3">
+          Build a quiz
+        </ButtonLink>
+      </div>
 
       {totalReview > 0 && (
         <div className="mb-6 nw-paper nw-paper--alt bg-[var(--color-accent-surface)] p-5">

@@ -45,9 +45,14 @@ export default async function LearnHubPage() {
               </p>
               <p className="font-display text-lg font-bold text-[var(--color-ink)]">{rec.title}</p>
               <p className="text-sm text-[var(--color-ink-soft)]">{rec.reason}</p>
-              <ButtonLink href={rec.href} size="sm" className="mt-2">
-                {rec.kind === "quiz" ? "Take the quiz" : "Continue"}
-              </ButtonLink>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <ButtonLink href={rec.href} size="sm">
+                  {rec.kind === "quiz" ? "Take the quiz" : "Continue"}
+                </ButtonLink>
+                <ButtonLink href="/quiz/build" size="sm" variant="secondary">
+                  Quiz me
+                </ButtonLink>
+              </div>
             </>
           ) : (
             <p className="text-sm text-[var(--color-ink-soft)]">
