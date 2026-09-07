@@ -156,7 +156,7 @@ export function birthPostpartumSeeds(): ContentSeed[] {
     stage: "POSTPARTUM",
     category: "Nutrition",
     summary: "Practical eating for the recovery period: balanced meals, hydration, fibre, protein and iron-rich foods, with convenient options.",
-    keyTakeaways: ["Aim for regular balanced meals and easy snacks.", "Hydration matters, especially if breastfeeding.", "No food 'heals' a condition — this is general nourishment (PRD §23)."],
+    keyTakeaways: ["Aim for regular balanced meals and easy snacks.", "Hydration matters, especially if breastfeeding.", "No food 'heals' a condition — this is general nourishment."],
     blocks: [
       heading("Focus areas"),
       list(["Balanced meals with protein, whole carbs and vegetables", "Fluids within reach, particularly during feeds", "Fibre (fruit, vegetables, whole grains) to ease constipation", "Iron-rich foods if you lost blood at birth — pair with vitamin C", "Convenient, one-handed snacks for feeding times"]),
@@ -198,7 +198,7 @@ export function birthPostpartumSeeds(): ContentSeed[] {
     stage: "POSTPARTUM" as const,
     category: "Parent wellbeing",
     summary,
-    keyTakeaways: [summary, "Supportive information — not a diagnosis (PRD §25).", "Professional help is available and effective."],
+    keyTakeaways: [summary, "Supportive information — not a diagnosis.", "Professional help is available and effective."],
     blocks: [
       para(summary),
       heading("What can help"),

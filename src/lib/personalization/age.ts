@@ -32,11 +32,12 @@ export function ageFromDob(dob: Date, today: Date = new Date()): ChildAge {
 
 /**
  * Timeline stage slug for a given age in months.
- * Months 1..12 -> "month-N"; then yearly bands "age-1-2" .. "age-11-12".
+ * NestWise covers pregnancy through the first three years, so:
+ * months 1..12 -> "month-N"; then "age-1-2" and "age-2-3" (capped at age 3+).
  */
 export function stageSlugForMonths(months: number): string {
   if (months < 12) return `month-${Math.max(1, months + 1)}`;
-  const lower = Math.min(11, Math.floor(months / 12));
+  const lower = Math.min(2, Math.floor(months / 12));
   return `age-${lower}-${lower + 1}`;
 }
 

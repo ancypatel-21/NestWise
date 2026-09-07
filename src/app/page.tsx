@@ -12,16 +12,16 @@ import { Card } from "@/components/ui/Card";
 import { MEDICAL_SCOPE_NOTE } from "@/lib/safety/constants";
 
 const JOURNEY = [
-  { emoji: "🤰", title: "Pregnancy", text: "Week-by-week guidance for the person expecting and their partner." },
+  { emoji: "🤰", title: "Pregnancy", text: "Week-by-week lessons, quizzes and video for the person expecting and their partner." },
   { emoji: "🏥", title: "Birth & postpartum", text: "Calm preparation for labour, the hospital, recovery and the first days home." },
-  { emoji: "🧸", title: "Child & family", text: "Development, activities, games and parent learning from birth to age 12." },
+  { emoji: "🧸", title: "First 3 years", text: "Month-by-month development, illustrated activities and play that adapts as your child grows." },
 ];
 
 const FEATURES = [
-  { icon: BookOpen, title: "Stage-based learning", text: "Short lessons and quizzes matched to your week or your child's age." },
-  { icon: MessageCircleHeart, title: "Ask NestWise", text: "Answers grounded in reviewed content, with a clear safety layer." },
-  { icon: HeartHandshake, title: "Partner guidance", text: "Concrete ways for partners to help at every stage." },
-  { icon: Sparkles, title: "Activities & games", text: "Things to do together that support development without pressure." },
+  { icon: BookOpen, title: "A personalised learning path", text: "NestWise picks your next lesson from your week, your role and what you've already learned — and tells you why." },
+  { icon: MessageCircleHeart, title: "Ask NestWise — your AI tutor", text: "Ask anything. Answers are grounded in reviewed content, cite their sources, and route urgent questions to real help." },
+  { icon: HeartHandshake, title: "Adaptive quizzes", text: "6–7 questions per topic, with instant explanations. NestWise brings back what you missed." },
+  { icon: Sparkles, title: "Learn by seeing", text: "Illustrated, animated movement guides and picture-based games — built for how young families actually learn." },
 ];
 
 export default function LandingPage() {
@@ -50,15 +50,15 @@ export default function LandingPage() {
       <main>
         <section className="mx-auto max-w-6xl px-5 pb-16 pt-10 text-center sm:pt-16">
           <p className="mx-auto mb-4 w-fit rounded-full bg-[var(--color-accent-surface)] px-3 py-1 text-xs font-semibold text-[var(--color-accent-strong)]">
-            Pregnancy → Birth → Newborn → Toddler → Child
+            Pregnancy → Birth → Newborn → The first 3 years
           </p>
           <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            A family learning companion that grows alongside your family
+            The AI learning companion for pregnancy and the first three years
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--color-ink-soft)]">
-            NestWise helps you feel prepared, informed and connected — from the first weeks of
-            pregnancy through your child's development to age 12. Warm and educational, never
-            clinical or overwhelming.
+            A personalised path through pregnancy, birth and early childhood — lessons, quizzes,
+            illustrated activities and an AI tutor that knows your stage. Warm and evidence-informed,
+            never clinical or overwhelming.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <ButtonLink href="/signup" size="lg">

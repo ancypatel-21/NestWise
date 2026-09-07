@@ -1,7 +1,7 @@
 import { slugify } from "@/lib/utils";
 
-/** Family games (PRD §35): bonding, little or no materials. Filter by age, players, indoor/
- * outdoor, time and materials. */
+/** Family games for babies and toddlers (up to age ~3): bonding, little or no materials.
+ * Filter by age, players, indoor/outdoor, time and materials. */
 export interface FamilyGameSeed {
   slug: string;
   title: string;
@@ -27,7 +27,7 @@ function g(
   outdoor: boolean,
   timeMin: number,
   needsMaterials: boolean,
-  ageMinYears: number,
+  ageMinMonths: number,
   instructions: string[],
   skillsPracticed: string[],
 ): FamilyGameSeed {
@@ -41,23 +41,74 @@ function g(
     outdoor,
     timeMin,
     needsMaterials,
-    ageMinMonths: ageMinYears * 12,
-    ageMaxMonths: 144,
+    ageMinMonths,
+    ageMaxMonths: 36,
     instructions,
     skillsPracticed,
   };
 }
 
 export const FAMILY_GAME_SEEDS: FamilyGameSeed[] = [
-  g("Family trivia", "Take turns asking questions from categories everyone helped write.", 2, 8, true, true, 20, false, 5, ["Each player writes 3 questions on slips or says them aloud.", "Take turns drawing and answering.", "One point per correct answer; team up younger players with an adult."], ["General knowledge", "Memory", "Turn-taking"]),
-  g("Guess the animal", "One person thinks of an animal; others ask yes/no questions.", 2, 8, true, true, 10, false, 3, ["Pick an animal secretly.", "Others ask up to 20 yes/no questions.", "Guess before the questions run out.", "Swap who chooses."], ["Deductive reasoning", "Question forming", "Vocabulary"]),
-  g("Charades", "Act out a word or phrase without speaking while others guess.", 3, 10, true, false, 20, false, 4, ["Write simple prompts on slips (animals, actions, films).", "Draw one and act it out silently.", "The guesser who gets it acts next."], ["Non-verbal communication", "Creativity", "Reading body language"]),
-  g("Story-building game", "Build one story together, a sentence at a time.", 2, 8, true, true, 15, false, 3, ["One person starts with a sentence.", "Each player adds one sentence in turn.", "Keep going to a satisfying ending."], ["Narrative skills", "Listening", "Imagination"]),
-  g("Memory challenge (tray game)", "Look at a tray of objects, then recall what's missing.", 2, 6, true, false, 15, true, 4, ["Place 8–12 objects on a tray and study for 30 seconds.", "Cover the tray and remove one object.", "Uncover and see who spots what's gone.", "Add more objects to level up."], ["Working memory", "Attention to detail"]),
-  g("Scavenger hunt", "Race or stroll to find items on a shared list.", 2, 10, true, true, 30, true, 3, ["Write a list of findable items suited to your space.", "Search individually or in pairs.", "Meet back to share finds and stories."], ["Observation", "Categorisation", "Physical activity"]),
-  g("Draw and guess", "Draw a prompt while your team guesses against the clock.", 3, 10, true, false, 20, true, 5, ["Write prompts on slips.", "Draw for your team — no letters or numbers.", "Rotate the drawer each round."], ["Visual communication", "Teamwork", "Quick thinking"]),
-  g("Would-you-rather for kids", "Offer two fun options and discuss why.", 2, 8, true, true, 10, false, 4, ["Take turns posing 'would you rather…' questions.", "Everyone answers and gives a reason.", "Keep options silly and kind."], ["Reasoning", "Expressing opinions", "Listening"]),
-  g("Indoor treasure hunt", "Follow a trail of clues to a small surprise.", 1, 6, true, false, 25, true, 4, ["Write 4–6 clues, each pointing to the next spot.", "Hide clues around the home ending at a treat or activity.", "Send the hunters off with the first clue."], ["Reading", "Problem solving", "Persistence"]),
-  g("Nature bingo", "Mark off natural things you spot on a walk.", 2, 8, true, true, 30, true, 3, ["Make bingo cards with pictures/words: bird, round stone, yellow flower, feather.", "Walk and mark items as you see them.", "First to a line — or just fill the card together."], ["Observation", "Vocabulary", "Outdoor time"]),
-  g("The quiet game with a twist", "See who can stay calm and quiet longest — loser tells a joke.", 2, 8, true, true, 5, false, 4, ["Everyone goes quiet at once.", "Last to make a sound wins.", "Whoever breaks first tells a joke or does a silly dance."], ["Self-regulation", "Humour", "Patience"]),
+  g("Peekaboo", "The classic hide-and-reappear game — pure connection and delight.", 2, 4, true, true, 5, false, 3, [
+    "Hide your face behind your hands or a light cloth.",
+    "Pop back with a warm 'peekaboo!'.",
+    "Let your baby pull the cloth away themselves.",
+    "Vary the timing to build anticipation.",
+  ], ["Object permanence", "Anticipation", "Social smiling"]),
+  g("This little piggy", "A toe-and-finger rhyme that ends in a happy tickle.", 2, 3, true, true, 3, false, 2, [
+    "Wiggle each toe or finger in turn as you say the rhyme.",
+    "Slow down near the end to build the tickle anticipation.",
+    "Pause and wait for your baby to ask for 'again'.",
+  ], ["Body awareness", "Rhythm and rhyme", "Turn-taking"]),
+  g("Roll the ball", "Sit facing each other and roll a soft ball back and forth.", 2, 4, true, true, 10, true, 6, [
+    "Sit on the floor a short distance apart, legs in a V.",
+    "Roll a soft ball to your child and cheer when they send it back.",
+    "Name what you're doing: 'my turn… your turn'.",
+    "Widen the gap as they get steadier.",
+  ], ["Turn-taking", "Hand-eye coordination", "Gross motor"]),
+  g("Copy me", "Take turns making a sound, face or simple action for others to copy.", 2, 5, true, true, 8, false, 12, [
+    "Clap twice — wait for your child to clap back.",
+    "Try a silly face, a stomp, a wave.",
+    "Let your toddler be the leader too.",
+  ], ["Imitation", "Attention", "Turn-taking"]),
+  g("Where is it? (hide the toy)", "Hide a favourite toy under one of two cups and find it together.", 2, 3, true, false, 10, true, 9, [
+    "Show the toy, then hide it under one cup while your child watches.",
+    "Ask 'where did it go?' and let them lift the cup.",
+    "Celebrate the find, then swap the cups slowly to make it trickier.",
+  ], ["Memory", "Object permanence", "Problem solving"]),
+  g("Animal parade", "March around the room being different animals.", 2, 6, true, true, 10, false, 18, [
+    "Call an animal — everyone moves and sounds like it.",
+    "Stomp like an elephant, hop like a bunny, waddle like a duck.",
+    "Let your toddler choose the next animal.",
+  ], ["Gross motor", "Imagination", "Animal words"]),
+  g("Bubble chase", "Blow bubbles and pop, catch or chase them together.", 2, 6, false, true, 15, true, 12, [
+    "Blow a stream of bubbles low and slow.",
+    "Encourage pointing, reaching, popping and chasing.",
+    "Name colours and sizes: 'a big one!'.",
+  ], ["Visual tracking", "Gross motor", "Cause and effect"]),
+  g("Sock basket sort", "Turn folding laundry into a matching game.", 2, 4, true, false, 15, true, 24, [
+    "Tip clean socks into a pile.",
+    "Find the matching pairs together, talking about colour and size.",
+    "Let your toddler 'post' matched pairs into a basket.",
+  ], ["Matching", "Categorising", "Helping at home"]),
+  g("Freeze dance", "Dance to music, then freeze when it stops.", 2, 8, true, true, 10, true, 18, [
+    "Play a song and dance together.",
+    "Pause the music and everyone freezes.",
+    "Start again — add moves like jump, spin, tiptoe.",
+  ], ["Listening", "Self-control", "Gross motor"]),
+  g("Story in a circle", "Build a tiny story together, one line each.", 2, 5, true, true, 10, false, 30, [
+    "Start with 'Once upon a time there was a little…'.",
+    "Each person adds one short line.",
+    "Keep it silly and happy; draw a scene from it after if you like.",
+  ], ["Early storytelling", "Listening", "Imagination"]),
+  g("Nature basket walk", "Collect safe natural treasures on a short walk.", 2, 5, false, true, 25, true, 18, [
+    "Take a small basket or bag.",
+    "Look for a leaf, a smooth stone, a feather, something yellow.",
+    "Sort and name the finds at home; wash hands after.",
+  ], ["Observation", "Vocabulary", "Outdoor time"]),
+  g("Tunnel and cushions", "Crawl through a soft homemade obstacle path.", 1, 3, true, false, 15, true, 8, [
+    "Set up cushions to climb over and a blanket over two chairs to crawl under.",
+    "Crawl alongside and call your baby through.",
+    "Keep everything low, soft and collapsible.",
+  ], ["Gross motor", "Spatial awareness", "Persistence"]),
 ];

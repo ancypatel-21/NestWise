@@ -31,9 +31,10 @@ describe("stage slug mapping (PRD §26)", () => {
     expect(stageSlugForMonths(5)).toBe("month-6");
     expect(stageSlugForMonths(11)).toBe("month-12");
   });
-  it("uses yearly bands after 12 months", () => {
+  it("uses toddler bands after 12 months, capped at age 3", () => {
     expect(stageSlugForMonths(12)).toBe("age-1-2");
     expect(stageSlugForMonths(30)).toBe("age-2-3");
-    expect(stageSlugForMonths(140)).toBe("age-11-12");
+    // NestWise covers to age 3, so anything older maps to the final band.
+    expect(stageSlugForMonths(140)).toBe("age-2-3");
   });
 });

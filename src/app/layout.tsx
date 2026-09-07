@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s · NestWise",
   },
   description:
-    "NestWise supports families from pregnancy through birth and a child's development to age 12 with calm, educational guidance. Not a medical or emergency service.",
+    "NestWise is an AI learning companion for the journey from pregnancy through birth and a child's first three years — calm, personalised, evidence-informed. Not a medical or emergency service.",
 };
 
 export const viewport: Viewport = {

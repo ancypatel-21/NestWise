@@ -7,7 +7,6 @@ import { CHILD_STAGES } from "@/content/child-development";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Tabs } from "@/components/ui/Tabs";
 import { ContentBlocks } from "@/components/ui/ContentBlocks";
-import { SourceBadge } from "@/components/ui/SourceBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 export async function generateMetadata({
@@ -93,10 +92,6 @@ export default async function ChildStagePage({
             },
           ]}
         />
-      </div>
-
-      <div className="mt-6">
-        <SourceBadge source={dev.source} reviewedAt={dev.reviewedAt} references={dev.referenceUrls} />
       </div>
     </div>
   );

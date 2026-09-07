@@ -16,7 +16,7 @@ export default async function ChildTimelinePage() {
   const months = active ? ageFromDob(active.dateOfBirth).months : -1;
 
   const firstYear = CHILD_STAGES.filter((s) => s.band === "First year");
-  const yearly = CHILD_STAGES.filter((s) => s.band === "Yearly stages");
+  const yearly = CHILD_STAGES.filter((s) => s.band === "Toddler");
 
   const isCurrent = (min: number, max: number) => months >= min && months < max;
 
@@ -24,7 +24,7 @@ export default async function ChildTimelinePage() {
     <div>
       <PageHeader
         title="Child development timeline"
-        intro="Month-by-month for the first year, then yearly bands to age 12. Every stage covers all six areas of development, a For Parents section, and positive discipline."
+        intro="Month-by-month through the first year, then the toddler years to age 3. Every stage covers all six areas of development, a For Parents section, and positive discipline."
         backHref="/child"
         backLabel="Child dashboard"
       />
@@ -56,7 +56,7 @@ export default async function ChildTimelinePage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-bold">Yearly stages</h2>
+        <h2 className="mb-3 text-lg font-bold">Toddler years</h2>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {yearly.map((s) => (
             <Link
