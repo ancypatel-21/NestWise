@@ -1,12 +1,13 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { requireFamilyContext } from "@/lib/auth/session";
-import { db } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth/session";
+import { getSessionUser, requireFamilyContext } from "@/lib/auth/session";
 import { completedSlugs } from "@/lib/content";
-import { LEARN_MODULES } from "@/content/learn-modules";
+import { recommendNext } from "@/lib/personalization/recommend";
+import { ALL_LESSONS, LEARN_MODULES } from "@/content/learn-modules";
+import { slugify } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ProgressBar } from "@/components/ui/Progress";
+import { ProgressBar, ProgressCircle } from "@/components/ui/Progress";
+import { ButtonLink } from "@/components/ui/Button";
 import { pct } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Learn" };
@@ -14,46 +15,70 @@ export const metadata: Metadata = { title: "Learn" };
 export default async function LearnHubPage() {
   const ctx = await requireFamilyContext();
   const user = await getSessionUser();
-  const isChildStage = ctx.stage.part === 3;
 
-  const lessons = await db.content.findMany({
-    where: { contentType: "LESSON", published: true },
-  });
   const done = user ? await completedSlugs(user.id) : new Set<string>();
+  const rec = user ? await recommendNext(ctx, user.id) : null;
 
-  const lessonsByCategory = new Map<string, number>();
-  const doneByCategory = new Map<string, number>();
-  for (const l of lessons) {
-    lessonsByCategory.set(l.category, (lessonsByCategory.get(l.category) ?? 0) + 1);
-    if (done.has(l.slug))
-      doneByCategory.set(l.category, (doneByCategory.get(l.category) ?? 0) + 1);
-  }
+  const totalLessons = ALL_LESSONS.length;
+  const doneLessons = ALL_LESSONS.filter((x) => done.has(x.slug)).length;
 
   return (
     <div>
       <PageHeader
-        title={isChildStage ? "Parent learning" : "Pregnancy learning hub"}
-        intro="Short lessons with key takeaways and a quick quiz. Save anything to read later; mark lessons complete to track progress."
+        title="Learning hub"
+        intro="16 short modules for pregnancy and the first weeks. Read a lesson, watch a video, take the quiz — NestWise tracks what sticks."
       />
+
+      <div className="mb-6 flex flex-wrap items-center gap-5 nw-paper p-5">
+        <ProgressCircle
+          value={pct(doneLessons, totalLessons)}
+          size={92}
+          stroke={10}
+          caption={`${doneLessons}/${totalLessons}`}
+          sub="lessons"
+        />
+        <div className="min-w-0 flex-1">
+          {rec ? (
+            <>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-accent-strong)]">
+                Continue
+              </p>
+              <p className="font-display text-lg font-bold text-[var(--color-ink)]">{rec.title}</p>
+              <p className="text-sm text-[var(--color-ink-soft)]">{rec.reason}</p>
+              <ButtonLink href={rec.href} size="sm" className="mt-2">
+                {rec.kind === "quiz" ? "Take the quiz" : "Continue"}
+              </ButtonLink>
+            </>
+          ) : (
+            <p className="text-sm text-[var(--color-ink-soft)]">
+              Pick any module to start. Your progress and quiz scores build a knowledge map on the
+              Progress page.
+            </p>
+          )}
+        </div>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {LEARN_MODULES.map((m) => {
-          const total = lessonsByCategory.get(m.title) ?? m.lessons.length;
-          const completed = doneByCategory.get(m.title) ?? 0;
+          const slugs = m.lessons.map((l) => `${m.slug}--${slugify(l.title)}`);
+          const total = slugs.length;
+          const completed = slugs.filter((s) => done.has(s)).length;
           return (
             <Link
               key={m.slug}
               href={`/learn/${m.slug}`}
-              className="flex flex-col gap-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)] transition-transform hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
+              className="nw-paper nw-paper--alt flex flex-col gap-2 p-5 transition-transform hover:-translate-y-0.5"
             >
               <span className="text-3xl" aria-hidden>
                 {m.emoji}
               </span>
-              <span className="text-base font-bold">{m.title}</span>
+              <span className="font-display text-base font-bold text-[var(--color-ink)]">
+                {m.title}
+              </span>
               <span className="text-sm text-[var(--color-ink-soft)]">{m.blurb}</span>
               <ProgressBar
                 value={pct(completed, total)}
-                label={`${completed}/${total} lessons`}
+                label={completed === total ? "Complete" : `${completed}/${total} lessons`}
                 className="mt-1"
               />
             </Link>
