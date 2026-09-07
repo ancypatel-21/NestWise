@@ -57,10 +57,10 @@ export default async function ActivityDetailPage({
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardTitle>Instructions</CardTitle>
-          <ol className="mt-2 space-y-2">
+          <ol className="mt-3 space-y-3">
             {a.instructions.map((step, i) => (
-              <li key={i} className="flex gap-3 text-sm text-[var(--color-ink-soft)]">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--color-accent-surface)] text-xs font-bold text-[var(--color-accent-strong)]">
+              <li key={i} className="flex gap-3 text-base leading-relaxed text-[var(--color-ink-soft)]">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--color-accent-surface)] text-sm font-bold text-[var(--color-accent-strong)]">
                   {i + 1}
                 </span>
                 {step}
@@ -69,13 +69,13 @@ export default async function ActivityDetailPage({
           </ol>
 
           <CardTitle className="mt-6">Parent participation</CardTitle>
-          <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{a.parentParticipation}</p>
+          <p className="mt-1 text-base leading-relaxed text-[var(--color-ink-soft)]">{a.parentParticipation}</p>
         </Card>
 
         <div className="space-y-4">
           <Card>
             <CardTitle>At a glance</CardTitle>
-            <dl className="mt-2 space-y-2 text-sm">
+            <dl className="mt-2 space-y-2 text-base">
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--color-ink-faint)]">
                   Recommended age
@@ -99,7 +99,7 @@ export default async function ActivityDetailPage({
 
           <Card>
             <CardTitle>Skills supported</CardTitle>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--color-ink-soft)]">
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-base text-[var(--color-ink-soft)]">
               {a.skillsSupported.map((s) => (
                 <li key={s}>{s}</li>
               ))}
@@ -109,7 +109,7 @@ export default async function ActivityDetailPage({
       </div>
 
       <Callout tone="caution" className="mt-6" title="Safety considerations">
-        <ul className="list-disc space-y-1 pl-5">
+        <ul className="list-disc space-y-1 pl-5 text-base">
           {a.safetyNotes.map((s) => (
             <li key={s}>{s}</li>
           ))}

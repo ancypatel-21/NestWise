@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { Search, Settings } from "lucide-react";
 import type { FamilyContext } from "@/types";
+import { availableModes, MODE_OVERRIDE_COOKIE } from "@/lib/personalization/mode-override";
 import { mobileNavForStage, navForStage } from "./nav-config";
 import { MobileTabBar, SidebarNav } from "./NavLinks";
+import { ModeSwitcher } from "./ModeSwitcher";
 import { StagePill } from "./StagePill";
 import { AskFab } from "./AskFab";
 
@@ -12,7 +15,7 @@ const PART_LABEL: Record<number, string> = {
   3: "Child & Family",
 };
 
-export function AppShell({
+export async function AppShell({
   ctx,
   children,
 }: {
@@ -21,6 +24,8 @@ export function AppShell({
 }) {
   const items = navForStage(ctx.stage);
   const mobileItems = mobileNavForStage(ctx.stage);
+  const modeOptions = availableModes(ctx.pregnancyProfile, ctx.children);
+  const overrideActive = !!(await cookies()).get(MODE_OVERRIDE_COOKIE)?.value;
 
   return (
     <div data-part={ctx.stage.part} className="min-h-dvh">
@@ -66,6 +71,11 @@ export function AppShell({
             </div>
             <StagePill stage={ctx.stage} />
             <div className="flex items-center gap-2">
+              <ModeSwitcher
+                current={ctx.stage.mode}
+                options={modeOptions}
+                overrideActive={overrideActive}
+              />
               <Link
                 href="/search"
                 aria-label="Search"

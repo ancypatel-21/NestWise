@@ -39,13 +39,13 @@ export default async function ActivitiesPage() {
 
       {forAge.length > 0 && (
         <section className="mb-8">
-          <h2 className="mb-3 text-lg font-bold">Good for now</h2>
+          <h2 className="mb-3 text-xl font-bold">Good for now</h2>
           <ActivityGrid items={forAge} />
         </section>
       )}
 
       <section>
-        <h2 className="mb-3 text-lg font-bold">{forAge.length ? "More activities" : "All activities"}</h2>
+        <h2 className="mb-3 text-xl font-bold">{forAge.length ? "More activities" : "All activities"}</h2>
         <ActivityGrid items={rest.length ? rest : all} />
       </section>
 
@@ -63,19 +63,19 @@ function ActivityGrid({
   items: Array<{ slug: string; title: string; category: string; skillsSupported: string[]; timeMin: number }>;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((a) => (
         <Link
           key={a.slug}
           href={`/child/activities/${a.slug}`}
-          className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-soft)]"
+          className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)]"
         >
           <div className="flex items-center justify-between gap-2">
             <Badge tone="accent">{a.category}</Badge>
-            <span className="text-xs text-[var(--color-ink-faint)]">{a.timeMin} min</span>
+            <span className="text-sm font-semibold text-[var(--color-ink-faint)]">{a.timeMin} min</span>
           </div>
-          <p className="mt-2 font-bold">{a.title}</p>
-          <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+          <p className="mt-2 text-lg font-bold">{a.title}</p>
+          <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
             Supports: {a.skillsSupported.slice(0, 2).join(", ")}
           </p>
         </Link>

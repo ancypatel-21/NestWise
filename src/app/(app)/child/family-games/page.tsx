@@ -31,7 +31,7 @@ export default async function FamilyGamesPage() {
           outdoor: g.outdoor,
           timeMin: g.timeMin,
           needsMaterials: g.needsMaterials,
-          ageMinYears: Math.round(g.ageMinMonths / 12),
+          ageMinMonths: g.ageMinMonths,
           instructions: g.instructions,
           skillsPracticed: g.skillsPracticed,
         }))}

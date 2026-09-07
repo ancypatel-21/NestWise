@@ -1,8 +1,14 @@
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Role } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getFamilyStage } from "@/lib/personalization/stage";
+import {
+  applyModeOverride,
+  isOverridableMode,
+  MODE_OVERRIDE_COOKIE,
+} from "@/lib/personalization/mode-override";
 import type { FamilyContext } from "@/types";
 import { auth } from "./index";
 
@@ -39,10 +45,16 @@ export const getFamilyContext = cache(async (): Promise<FamilyContext | null> =>
     db.child.findMany({ where: { familyId: membership.familyId }, orderBy: { dateOfBirth: "asc" } }),
   ]);
 
+  const naturalStage = getFamilyStage(pregnancyProfile, children);
+  const override = (await cookies()).get(MODE_OVERRIDE_COOKIE)?.value;
+  const stage = isOverridableMode(override)
+    ? applyModeOverride(naturalStage, override, pregnancyProfile, children)
+    : naturalStage;
+
   return {
     familyId: membership.familyId,
     role: membership.role,
-    stage: getFamilyStage(pregnancyProfile, children),
+    stage,
     pregnancyProfile,
     children,
     personalization: {

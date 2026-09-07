@@ -16,7 +16,7 @@ export interface FamilyGameView {
   outdoor: boolean;
   timeMin: number;
   needsMaterials: boolean;
-  ageMinYears: number;
+  ageMinMonths: number;
   instructions: string[];
   skillsPracticed: string[];
 }
@@ -24,8 +24,20 @@ export interface FamilyGameView {
 type Place = "any" | "indoor" | "outdoor";
 type TimeBand = "any" | "quick" | "medium" | "long";
 
+/** NestWise covers pregnancy to age 3, so age is filtered in three yearly bands. */
+const AGE_BANDS = [
+  { key: "0-1", label: "0–1 yr", maxMonths: 12 },
+  { key: "1-2", label: "1–2 yrs", maxMonths: 24 },
+  { key: "2-3", label: "2–3 yrs", maxMonths: 36 },
+] as const;
+type AgeBand = (typeof AGE_BANDS)[number]["key"] | "any";
+
+function ageLabel(months: number) {
+  return months < 12 ? `${months} mo+` : `${Math.round(months / 12)} yr+`;
+}
+
 export function FamilyGamesBrowser({ games }: { games: FamilyGameView[] }) {
-  const [age, setAge] = useState<number | "any">("any");
+  const [age, setAge] = useState<AgeBand>("any");
   const [players, setPlayers] = useState<number | "any">("any");
   const [place, setPlace] = useState<Place>("any");
   const [time, setTime] = useState<TimeBand>("any");
@@ -34,7 +46,10 @@ export function FamilyGamesBrowser({ games }: { games: FamilyGameView[] }) {
   const filtered = useMemo(
     () =>
       games.filter((g) => {
-        if (age !== "any" && g.ageMinYears > age) return false;
+        if (age !== "any") {
+          const band = AGE_BANDS.find((b) => b.key === age);
+          if (band && g.ageMinMonths >= band.maxMonths) return false;
+        }
         if (players !== "any" && (players < g.minPlayers || players > g.maxPlayers)) return false;
         if (place === "indoor" && !g.indoor) return false;
         if (place === "outdoor" && !g.outdoor) return false;
@@ -51,9 +66,12 @@ export function FamilyGamesBrowser({ games }: { games: FamilyGameView[] }) {
     <div>
       <Card className="mb-6 space-y-4">
         <Row icon={<Users size={16} />} label="Child age">
-          {(["any", 3, 4, 5, 6, 8, 10] as const).map((a) => (
-            <Chip key={a} active={age === a} onClick={() => setAge(a)}>
-              {a === "any" ? "Any" : `${a}+`}
+          <Chip active={age === "any"} onClick={() => setAge("any")}>
+            Any
+          </Chip>
+          {AGE_BANDS.map((b) => (
+            <Chip key={b.key} active={age === b.key} onClick={() => setAge(b.key)}>
+              {b.label}
             </Chip>
           ))}
         </Row>
@@ -85,30 +103,30 @@ export function FamilyGamesBrowser({ games }: { games: FamilyGameView[] }) {
         </Row>
       </Card>
 
-      <p className="mb-3 text-sm text-[var(--color-ink-soft)]">
+      <p className="mb-3 text-base text-[var(--color-ink-soft)]">
         {filtered.length} game{filtered.length === 1 ? "" : "s"}
       </p>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {filtered.map((g) => (
           <Card key={g.slug}>
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="font-bold">{g.title}</p>
-              <span className="text-xs text-[var(--color-ink-faint)]">
-                {g.minPlayers}–{g.maxPlayers} players · {g.timeMin} min · {g.ageMinYears}+
-                {g.indoor && g.outdoor ? " · indoor/outdoor" : g.outdoor ? " · outdoor" : " · indoor"}
-                {g.needsMaterials ? "" : " · no materials"}
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-[var(--color-ink-soft)]">{g.description}</p>
-            <div className="mt-3">
+            <p className="text-xl font-bold sm:text-2xl">{g.title}</p>
+            <p className="mt-1 text-sm font-semibold text-[var(--color-ink-faint)]">
+              {g.minPlayers}–{g.maxPlayers} players · {g.timeMin} min · {ageLabel(g.ageMinMonths)}
+              {g.indoor && g.outdoor ? " · indoor/outdoor" : g.outdoor ? " · outdoor" : " · indoor"}
+              {g.needsMaterials ? "" : " · no materials"}
+            </p>
+            <p className="mt-2 text-base leading-relaxed text-[var(--color-ink-soft)]">
+              {g.description}
+            </p>
+            <div className="mt-3 text-base">
               <Accordion
                 items={[
                   {
                     id: "how",
                     title: "How to play",
                     content: (
-                      <ol className="list-decimal space-y-1 pl-5">
+                      <ol className="list-decimal space-y-2 pl-5 text-base leading-relaxed">
                         {g.instructions.map((s, i) => (
                           <li key={i}>{s}</li>
                         ))}
@@ -136,7 +154,7 @@ function Row({
 }) {
   return (
     <div>
-      <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--color-ink-faint)]">
+      <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-[var(--color-ink-faint)]">
         {icon}
         {label}
       </p>

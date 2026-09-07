@@ -5,6 +5,7 @@ import { computeStreak } from "@/lib/streak";
 import { buildGame, nextLevel, roundsForLevel } from "@/lib/games/engine";
 import { isKidAllowedPath } from "@/lib/kids-mode";
 import { dueDateFromWeek } from "@/lib/personalization/pregnancy";
+import { applyModeOverride, availableModes } from "@/lib/personalization/mode-override";
 
 const baseContent = {
   id: "x",
@@ -79,6 +80,54 @@ describe("family stage resolver (PRD §3, §17)", () => {
 
   it("unset with no profile and no children", () => {
     expect(getFamilyStage(null, [], today).mode).toBe("unset");
+  });
+});
+
+describe("manual journey switch (PRD §3, §6)", () => {
+  const today = new Date("2026-06-01T00:00:00Z");
+  const profile = {
+    familyId: "f",
+    estimatedDueDate: dueDateFromWeek(20, today),
+    createdAt: today,
+  } as never;
+  const toddler = {
+    id: "c1",
+    nameOrNickname: "Bo",
+    dateOfBirth: new Date("2024-06-01"),
+    createdAt: new Date("2024-06-01"),
+  } as never;
+
+  it("only offers journeys the family has data for", () => {
+    expect(availableModes(null, []).length).toBe(0);
+    expect(availableModes(profile, []).map((m) => m.value)).toEqual([
+      "pregnancy",
+      "birth-countdown",
+    ]);
+    expect(availableModes(profile, [toddler]).map((m) => m.value)).toEqual([
+      "pregnancy",
+      "birth-countdown",
+      "postpartum",
+      "child",
+    ]);
+  });
+
+  it("re-derives an accurate stage for the chosen journey", () => {
+    const natural = getFamilyStage(profile, [], today);
+    expect(natural.mode).toBe("pregnancy");
+
+    const forced = applyModeOverride(natural, "birth-countdown", profile, [], today);
+    expect(forced.mode).toBe("birth-countdown");
+    expect(forced.part).toBe(2);
+    expect(forced.pregnancyWeek).toBe(20);
+
+    const toChild = applyModeOverride(natural, "child", profile, [toddler], today);
+    expect(toChild.mode).toBe("child");
+    expect(toChild.primaryChildName).toBe("Bo");
+  });
+
+  it("ignores an override the family has no data for", () => {
+    const natural = getFamilyStage(profile, [], today);
+    expect(applyModeOverride(natural, "child", profile, [], today)).toEqual(natural);
   });
 });
 

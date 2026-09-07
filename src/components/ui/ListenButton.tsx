@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play, Volume2 } from "lucide-react";
+import { onVoicesReady, pickSoftFemaleVoice } from "@/lib/voice";
 
 /**
  * "Listen" — reads a lesson aloud using the browser's built-in speech synthesis. No servers,
@@ -12,10 +13,15 @@ export function ListenButton({ text }: { text: string }) {
   const [speaking, setSpeaking] = useState(false);
   const chunks = useRef<string[]>([]);
   const idx = useRef(0);
+  const voice = useRef<SpeechSynthesisVoice | null>(null);
 
   useEffect(() => {
     setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
+    const stop = onVoicesReady(() => {
+      voice.current = pickSoftFemaleVoice();
+    });
     return () => {
+      stop();
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
@@ -28,8 +34,14 @@ export function ListenButton({ text }: { text: string }) {
       return;
     }
     const u = new SpeechSynthesisUtterance(chunks.current[idx.current]);
-    u.rate = 1;
-    u.pitch = 1;
+    // Soft, gentle female delivery — a little slower and higher than the default.
+    if (!voice.current) voice.current = pickSoftFemaleVoice();
+    if (voice.current) {
+      u.voice = voice.current;
+      u.lang = voice.current.lang;
+    }
+    u.rate = 0.95;
+    u.pitch = 1.15;
     u.onend = () => {
       idx.current += 1;
       speakNext();
