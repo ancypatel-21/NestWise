@@ -4,6 +4,7 @@ import { getSessionUser, requireFamilyContext } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { savedSlugs } from "@/lib/content";
 import { ContentDetail } from "@/components/ContentDetail";
+import { ExerciseFigure, figureForSlug } from "@/components/ui/ExerciseFigure";
 
 export async function generateMetadata({
   params,
@@ -36,6 +37,14 @@ export default async function ExerciseDetailPage({
       refType="exercise"
       href={`/exercise/${content.slug}`}
       saved={saved.has(content.slug)}
+      hero={
+        <div className="flex flex-col items-center gap-2">
+          <ExerciseFigure kind={figureForSlug(content.slug)} />
+          <p className="text-xs text-[var(--color-ink-faint)]">
+            A rough guide to the movement — follow the written steps and stop if anything hurts.
+          </p>
+        </div>
+      }
     />
   );
 }

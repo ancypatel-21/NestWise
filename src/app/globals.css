@@ -238,6 +238,96 @@
     background-size: 140px 10px;
   }
 
+  /* ---- Animated exercise figures ---------------------------------------- */
+  .nw-fig {
+    color: var(--color-graphite);
+  }
+  .nw-fig svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .nw-fig-anim {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .nw-fig[data-kind="walk"] .leg-front {
+    animation: nw-swing 1.2s ease-in-out infinite alternate;
+    transform-origin: top center;
+  }
+  .nw-fig[data-kind="walk"] .leg-back {
+    animation: nw-swing 1.2s ease-in-out infinite alternate-reverse;
+    transform-origin: top center;
+  }
+  .nw-fig[data-kind="walk"] .arm {
+    animation: nw-swing 1.2s ease-in-out infinite alternate-reverse;
+    transform-origin: top center;
+  }
+  .nw-fig[data-kind="catcow"] .spine {
+    animation: nw-arch 2.6s ease-in-out infinite alternate;
+    transform-origin: center;
+  }
+  .nw-fig[data-kind="squat"] .body {
+    animation: nw-squat 2.6s ease-in-out infinite alternate;
+  }
+  .nw-fig[data-kind="stretch"] .torso {
+    animation: nw-lean 3s ease-in-out infinite alternate;
+    transform-origin: bottom center;
+  }
+  .nw-fig[data-kind="breathe"] .belly {
+    animation: nw-breathe 4s ease-in-out infinite;
+    transform-origin: center;
+  }
+  .nw-fig[data-kind="leglift"] .top-leg {
+    animation: nw-lift 2.4s ease-in-out infinite alternate;
+    transform-origin: left center;
+  }
+  .nw-fig[data-kind="wallpush"] .push-arm {
+    animation: nw-push 2s ease-in-out infinite alternate;
+  }
+  .nw-fig[data-kind="pelvicfloor"] .lift-mark {
+    animation: nw-pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes nw-swing {
+    from { transform: rotate(-16deg); }
+    to { transform: rotate(16deg); }
+  }
+  @keyframes nw-arch {
+    from { transform: translateY(2px) scaleY(0.94); }
+    to { transform: translateY(-3px) scaleY(1.06); }
+  }
+  @keyframes nw-squat {
+    from { transform: translateY(0); }
+    to { transform: translateY(10px); }
+  }
+  @keyframes nw-lean {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(-18deg); }
+  }
+  @keyframes nw-breathe {
+    0%, 100% { transform: scale(1); }
+    45% { transform: scale(1.12); }
+  }
+  @keyframes nw-lift {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(-24deg); }
+  }
+  @keyframes nw-push {
+    from { transform: translateX(0); }
+    to { transform: translateX(-7px); }
+  }
+  @keyframes nw-pulse {
+    0%, 100% { transform: translateY(4px); opacity: 0.35; }
+    50% { transform: translateY(-4px); opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nw-fig * {
+      animation: none !important;
+    }
+  }
+
   /* A barely-tinted paper wash for hero bands */
   .nw-gradient {
     background-color: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface));
