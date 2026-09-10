@@ -7,8 +7,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Pooled connection used by the app at runtime (e.g. Neon's -pooler host on serverless).
+  url       = env("DATABASE_URL")
+  // Direct connection used by `prisma migrate` / `prisma db push`. Locally this is the same
+  // as DATABASE_URL; on a pooled host set it to the non-pooled connection string.
+  directUrl = env("DIRECT_URL")
 }
 
 // ---------------------------------------------------------------------------

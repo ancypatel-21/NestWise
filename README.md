@@ -230,6 +230,51 @@ grounded in curated content and phrased by a template.
 
 ---
 
+## Deploy (free)
+
+The app runs on a free **Vercel** + **Neon Postgres** pair. No credit card, no time limit.
+
+### 1. Create the database (Neon)
+
+1. Sign up at [neon.tech](https://neon.tech) and create a project.
+2. Copy both connection strings it shows:
+   - **Pooled** (host contains `-pooler`)
+   - **Direct** (no `-pooler`)
+
+### 2. Load schema and content (once, from your machine)
+
+This writes only to the new Neon database; your local database is untouched.
+
+```bash
+DATABASE_URL="<neon-direct-url>" DIRECT_URL="<neon-direct-url>" npx prisma db push
+DATABASE_URL="<neon-direct-url>" DIRECT_URL="<neon-direct-url>" npm run seed
+```
+
+### 3. Deploy the app (Vercel)
+
+1. [vercel.com](https://vercel.com) → **Add New → Project** → import this repo. It auto-detects
+   Next.js and uses `vercel.json` (`prisma generate && next build`).
+2. Add environment variables:
+
+   | Name | Value |
+   |---|---|
+   | `DATABASE_URL` | Neon **pooled** string |
+   | `DIRECT_URL` | Neon **direct** string |
+   | `AUTH_SECRET` | output of `openssl rand -base64 32` |
+   | `AUTH_TRUST_HOST` | `true` |
+   | `NEXTAUTH_URL` | your `https://<project>.vercel.app` URL (add after the first deploy, then redeploy) |
+   | `OPENAI_API_KEY` / `OPENAI_MODEL` | optional |
+
+3. Deploy, then open the URL. Log in with the demo account or sign up.
+
+### Known free-tier limits
+
+- Neon suspends after a few minutes idle; the next request has a short cold start.
+- Milestone-journal photo uploads use local disk, which is ephemeral on Vercel. Everything else
+  persists in Neon. Move uploads to Vercel Blob (free allowance) for durability.
+
+---
+
 ## Guided tour
 
 1. **Sign up**, run the onboarding wizard, choose *"I'm expecting"*, and enter a due date. The
