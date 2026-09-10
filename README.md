@@ -130,13 +130,37 @@ derive from that single resolved stage.
 
 ---
 
-## Accessibility and calm
+## Accessibility and inclusion
 
-- Hand drawn "sketchbook" design system: paper palette, wobble border UI kit, light and dark tokens.
-- **Listen**: text to speech on every lesson, with a soft voice.
-- Gently animated hand drawn figures for every movement and exercise.
-- **Kids Mode**: a cookie that swaps the whole shell for a toddler safe game launcher.
-- Reduced motion aware, 44px targets, semantic headings, captions on every illustration.
+Accessibility was a design constraint from the start, not a retrofit. A parent may be moving
+through pregnancy or life with a newborn while also managing low vision, chronic pain, fatigue, a
+learning difference, or limited mobility. NestWise is built so none of that stands between her and
+the learning.
+
+### Listen on every lesson
+
+Every lesson has a **Listen** button (`src/components/ui/ListenButton.tsx`) that reads the full
+lesson aloud in a soft voice, split into natural chunks so no sentence is dropped by the speech
+engine. It needs no account, no download, and no extra data connection. A mother who is blind or
+has low vision, who finds long reading painful, who is resting with her eyes closed, or who is
+holding a baby with both hands still receives the entire lesson, hands free.
+
+### Designed for a range of needs
+
+| Situation | How NestWise responds |
+|---|---|
+| Blindness or low vision | Listen reads any lesson aloud; semantic headings and ARIA landmarks for screen readers; a skip to content link; relative units so browser zoom works cleanly |
+| Reading fatigue, dyslexia, low literacy, or English as a second language | Any lesson can be heard instead of read; **Explain differently** rewrites a highlighted passage in plainer language or as a concrete example |
+| Limited mobility or one handed use (late pregnancy, or while carrying a baby) | Listen is fully hands free; 44px minimum touch targets; the whole app is keyboard operable |
+| Vestibular disorders, migraine, motion sensitivity | Honours `prefers-reduced-motion`; animation is gated and there is no autoplaying video |
+| Sensory overload, anxiety, postpartum overwhelm | Calm sketchbook visuals, light and dark themes, status never signalled by colour alone, nothing flashing or interrupting |
+| High cognitive load | One clear next action per screen; **Kids Mode** strips the shell down to a toddler safe game launcher |
+
+### Baseline
+
+Semantic HTML and heading order, visible focus rings, `aria` labels and `aria-current` state,
+captions or alt text on every illustration, high contrast graphite ink on warm paper with a full
+dark theme, and a persistent skip to content link.
 
 ---
 
