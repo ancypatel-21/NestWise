@@ -21,12 +21,6 @@ tutor that always knows your stage.
 
 </div>
 
-> [!IMPORTANT]
-> NestWise provides **educational information and decision support**, not medical diagnosis or
-> emergency care. It is not an emergency service. Health copy in this repo is evidence informed
-> scaffolding structured for clinical review, never invented authoritative advice. The safety
-> framing, escalation wording, and source citations are the real, load bearing parts.
-
 ---
 
 ## The problem
