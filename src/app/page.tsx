@@ -53,12 +53,11 @@ export default function LandingPage() {
             Pregnancy → Birth → Newborn → The first 3 years
           </p>
           <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            The AI learning companion for pregnancy and the first three years
+            Every Parent Learns. Every Day.
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--color-ink-soft)]">
-            A personalised path through pregnancy, birth and early childhood — lessons, quizzes,
-            illustrated activities and an AI tutor that knows your stage. Warm and evidence-informed,
-            never clinical or overwhelming.
+            Guiding families through pregnancy, childbirth, and early parenting with personalized
+            learning.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <ButtonLink href="/signup" size="lg">

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s · NestWise",
   },
   description:
-    "NestWise is an AI learning companion for the journey from pregnancy through birth and a child's first three years — calm, personalised, evidence-informed. Not a medical or emergency service.",
+    "Every parent learns, every day. NestWise guides families through pregnancy, childbirth, and early parenting with personalized learning — calm, evidence-informed, and never clinical. Not a medical or emergency service.",
 };
 
 export const viewport: Viewport = {
